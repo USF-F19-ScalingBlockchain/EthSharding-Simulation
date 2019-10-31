@@ -1,11 +1,11 @@
 package transaction
 
 import (
+	"../../utils"
 	"bytes"
 	"hash/fnv"
 	"log"
 	"sync"
-	"../../utils"
 )
 
 //this is for mining
@@ -13,7 +13,7 @@ type TransactionPool struct {
 	Pool map[string]Transaction `json:"pool"`
 	//Confirmed map[string]bool        `json:"confirmed"`
 	ShardId uint32
-	mux sync.Mutex
+	mux     sync.Mutex
 }
 
 //type TransactionPoolJson struct {
@@ -22,7 +22,7 @@ type TransactionPool struct {
 
 func NewTransactionPool(shardId uint32) TransactionPool {
 	return TransactionPool{
-		Pool: make(map[string]Transaction),
+		Pool:    make(map[string]Transaction),
 		ShardId: shardId,
 		//Confirmed: make(map[string]bool),
 	}
@@ -83,8 +83,14 @@ func (txp *TransactionPool) ReadFromTransactionPool(n int) map[string]Transactio
 
 func (txp *TransactionPool) matchShard(transaction Transaction) bool {
 	h := fnv.New32a()
-	h.Write([]byte(transaction.Id))
-	return h.Sum32() % utils.TOTAL_SHARDS == txp.ShardId
+	h.Write([]byte(transaction.From.PublicIdentityToJson()))
+	return h.Sum32()%utils.TOTAL_SHARDS == txp.ShardId
+}
+
+func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
+	h := fnv.New32a()
+	h.Write([]byte(transaction.To.PublicIdentityToJson()))
+	return h.Sum32()%utils.TOTAL_SHARDS != txp.ShardId
 }
 
 //func (txp *TransactionPoolJson) EncodeToJsonTransactionPoolJson() string {
@@ -124,4 +130,3 @@ func (txp *TransactionPool) matchShard(transaction Transaction) bool {
 //	fmt.Println("GetTransactionPoolJsonObj :::::::::::::::: json is ", txpj.EncodeToJsonTransactionPoolJson())
 //	return txpj
 //}
-
