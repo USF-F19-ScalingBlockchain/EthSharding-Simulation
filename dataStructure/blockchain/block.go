@@ -20,12 +20,31 @@ type Head struct {
 	Size       int32  // `json:"parenthash"`
 	Nonce      string //'json:"nonce"'
 	Miner      t.PublicIdentity
+	BlockType BlockType
+}
+
+type BlockType int
+
+const(
+	SHARD BlockType = 0
+	TRANSACTION BlockType = 1
+)
+
+func (blockType BlockType) String() string {
+	switch blockType {
+	case SHARD:
+		return "SHARD"
+	case TRANSACTION:
+		return "TRANSACTION"
+	default:
+		return ""
+	}
 }
 
 // Block struct defines the block
 type Block struct {
-	Header Head                   //`json:"header"`
-	Value  mpt.MerklePatriciaTrie //`json:"merklepatriciatrie"`
+	Header Head
+	Value  mpt.MerklePatriciaTrie
 }
 
 // BlockJson is a block struct for json
@@ -38,10 +57,11 @@ type BlockJson struct {
 	Nonce      string            `json:"nonce"`
 	Miner      t.PublicIdentity  `json:"miner"`
 	MPT        map[string]string `json:"mpt"`
+	BlockType BlockType			 `json:"blockType"`
 }
 
 // Initial function a Block initializes the block for height, parentHash and Value
-func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePatriciaTrie, nonce string, miner t.PublicIdentity) {
+func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePatriciaTrie, nonce string, miner t.PublicIdentity, blockType BlockType) {
 
 	block.Header.Timestamp = time.Now().Unix()
 	block.Header.Height = height
@@ -51,6 +71,7 @@ func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePat
 	block.Header.Nonce = nonce
 	block.Header.Miner = miner
 	block.Header.Hash = block.Hash()
+	block.Header.BlockType = blockType
 
 }
 
@@ -73,12 +94,13 @@ func DecodeFromJSON(jsonString string) Block {
 		blockJson.Size,
 		blockJson.Nonce,
 		blockJson.Miner,
-		blockJson.MPT)
+		blockJson.MPT,
+		blockJson.BlockType)
 }
 
 // DecodeToBlock func creates a type block from from all given parameters
 func DecodeToBlock(height int32, timestamp int64, hash string, parentHash string, size int32, nonce string,
-	miner t.PublicIdentity, keyValueMap map[string]string) Block {
+	miner t.PublicIdentity, keyValueMap map[string]string, blockType BlockType) Block {
 
 	block := Block{}
 	block.Header.Height = height
@@ -88,6 +110,7 @@ func DecodeToBlock(height int32, timestamp int64, hash string, parentHash string
 	block.Header.Size = size
 	block.Header.Nonce = nonce
 	block.Header.Miner = miner
+	block.Header.BlockType = blockType
 
 	//creating mpt from key - value pairs
 	blockMPT := mpt.MerklePatriciaTrie{}
@@ -112,6 +135,7 @@ func EncodeToJSON(block *Block) string {
 		Nonce:      block.Header.Nonce,
 		Miner:      block.Header.Miner,
 		MPT:        block.Value.GetAllKeyValuePairs(),
+		BlockType:  block.Header.BlockType,
 	}
 
 	jsonByteArray, err := json.Marshal(blockForJson)
@@ -129,7 +153,7 @@ func (block *Block) Hash() string {
 	var hashStr string
 
 	hashStr = string(block.Header.Height) + string(block.Header.Timestamp) + string(block.Header.ParentHash) +
-		string(block.Value.Root) + string(block.Header.Size) + block.Header.Nonce + block.Header.Miner.PublicIdentityToJson()
+		string(block.Value.Root) + string(block.Header.Size) + block.Header.Nonce + block.Header.Miner.PublicIdentityToJson() + block.Header.BlockType.String()
 
 	sum := sha3.Sum256([]byte(hashStr))
 	return "HashStart_" + hex.EncodeToString(sum[:]) + "_HashEnd"

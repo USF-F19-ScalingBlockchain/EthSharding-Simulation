@@ -2,26 +2,28 @@ package transaction
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
+	"hash/fnv"
 	"log"
 	"sync"
+	"../../utils"
 )
 
 //this is for mining
 type TransactionPool struct {
 	Pool map[string]Transaction `json:"pool"`
 	//Confirmed map[string]bool        `json:"confirmed"`
+	ShardId uint32
 	mux sync.Mutex
 }
 
-type TransactionPoolJson struct {
-	Pool map[string]Transaction `json:"pool"`
-}
+//type TransactionPoolJson struct {
+//	Pool map[string]Transaction `json:"pool"`
+//}
 
-func NewTransactionPool() TransactionPool {
+func NewTransactionPool(shardId uint32) TransactionPool {
 	return TransactionPool{
 		Pool: make(map[string]Transaction),
+		ShardId: shardId,
 		//Confirmed: make(map[string]bool),
 	}
 }
@@ -31,19 +33,11 @@ func (txp *TransactionPool) AddToTransactionPool(tx Transaction) { //duplicates 
 	defer txp.mux.Unlock()
 
 	if _, ok := txp.Pool[tx.Id]; !ok {
-		log.Println("In AddToTransactionPool : Adding new")
-		txp.Pool[tx.Id] = tx
-	}
-}
-
-func (txp *TransactionPool) AddPoolToTransactionPool(recvTxp TransactionPool) { //duplicates in transactinon pool
-	txp.mux.Lock()
-	defer txp.mux.Unlock()
-
-	for _, tx := range recvTxp.Pool {
-		if _, ok := txp.Pool[tx.Id]; !ok {
-			log.Println("In AddToTransactionPool : Adding new - tx.Id : ", tx.Id)
+		if txp.matchShard(tx) {
+			log.Println("In AddToTransactionPool : Adding new")
 			txp.Pool[tx.Id] = tx
+		} else {
+			log.Println("Cannot add Transaction with Id: ", tx.Id, " in pool ", txp.ShardId)
 		}
 	}
 }
@@ -87,70 +81,47 @@ func (txp *TransactionPool) ReadFromTransactionPool(n int) map[string]Transactio
 	return tempMap
 }
 
-//func (txp *TransactionPool) EncodeToJson() string {
+func (txp *TransactionPool) matchShard(transaction Transaction) bool {
+	h := fnv.New32a()
+	h.Write([]byte(transaction.Id))
+	return h.Sum32() % utils.TOTAL_SHARDS == txp.ShardId
+}
+
+//func (txp *TransactionPoolJson) EncodeToJsonTransactionPoolJson() string {
 //	jsonBytes, err := json.Marshal(txp)
 //	if err != nil {
 //		log.Println("Error in encoding TransactionPool to json, err - ", err)
 //	}
-//	log.Println("TransactionPool jsonStr is =======> ", string(jsonBytes))
+//	log.Println("TransactionPoolJson jsonStr is =======> ", string(jsonBytes))
 //
 //	return string(jsonBytes)
 //}
-
-func (txpj *TransactionPoolJson) EncodeToJsonTransactionPoolJson() string {
-	jsonBytes, err := json.Marshal(txpj)
-	if err != nil {
-		log.Println("Error in encoding TransactionPool to json, err - ", err)
-	}
-	log.Println("TransactionPoolJson jsonStr is =======> ", string(jsonBytes))
-
-	return string(jsonBytes)
-}
-
-//func DecodeJsonToTransactionPool(jsonStr string) TransactionPool {
-//	txp := TransactionPool{}
+//
+//func DecodeJsonToTransactionPoolJson(jsonStr string) TransactionPoolJson {
+//	txp := TransactionPoolJson{}
 //
 //	err := json.Unmarshal([]byte(jsonStr), &txp)
 //	if err != nil {
-//		log.Println("Error in decoding json to TransactionPool, err - ", err)
-//		log.Println("TransactionPool jsonStr is =======> ", jsonStr)
+//		log.Println("Error in decoding json to TransactionPoolJson, err - ", err)
+//		log.Println("TransactionPoolJson jsonStr is =======> ", jsonStr)
 //	}
 //	return txp
 //}
-
-func DecodeJsonToTransactionPoolJson(jsonStr string) TransactionPoolJson {
-	txpj := TransactionPoolJson{}
-
-	err := json.Unmarshal([]byte(jsonStr), &txpj)
-	if err != nil {
-		log.Println("Error in decoding json to TransactionPoolJson, err - ", err)
-		log.Println("TransactionPoolJson jsonStr is =======> ", jsonStr)
-	}
-	return txpj
-}
-
-//Copy func returns a copy of the peerMap
-func (txp *TransactionPool) GetTransactionPoolJsonObj() TransactionPoolJson {
-
-	txp.mux.Lock()
-	defer txp.mux.Unlock()
-
-	txpj := TransactionPoolJson{}
-	txpj.Pool = make(map[string]Transaction)
-	//copyOfTxPool := make(map[string]Transaction)
-	for k := range txp.Pool {
-		txpj.Pool[k] = txp.Pool[k]
-	}
-
-	fmt.Println("GetTransactionPoolJsonObj :::::::::::::::: json is ", txpj.EncodeToJsonTransactionPoolJson())
-	return txpj
-}
-
-//func TransactionPoolTest() {
-//	txp := TransactionPool{}
-//	str := txp.EncodeToJson()
-//	fmt.Println("json Transaction pool - ",str )
-//	txp1 := DecodeJsonToTransactionPool(str)
-//	str1 := txp1.EncodeToJson()
-//	fmt.Println("json Transaction pool - ",str1 )
+//
+////Copy func returns a copy of the peerMap
+//func (txp *TransactionPool) GetTransactionPoolJsonObj() TransactionPoolJson {
+//
+//	txp.mux.Lock()
+//	defer txp.mux.Unlock()
+//
+//	txpj := TransactionPoolJson{}
+//	txpj.Pool = make(map[string]Transaction)
+//	//copyOfTxPool := make(map[string]Transaction)
+//	for k := range txp.Pool {
+//		txpj.Pool[k] = txp.Pool[k]
+//	}
+//
+//	fmt.Println("GetTransactionPoolJsonObj :::::::::::::::: json is ", txpj.EncodeToJsonTransactionPoolJson())
+//	return txpj
 //}
+

@@ -92,10 +92,10 @@ func (sbc *SyncBlockChain) BlockChainToJson() (string, error) {
 
 // GenBlock finc takes in a mpt and returns a block for the node
 // takes parentat list[0] in random height
-func (sbc *SyncBlockChain) GenBlock(height int32, parentHash string, mpt mpt.MerklePatriciaTrie, nonce string, miner s.PublicIdentity) Block {
+func (sbc *SyncBlockChain) GenBlock(height int32, parentHash string, mpt mpt.MerklePatriciaTrie, nonce string, miner s.PublicIdentity, blockType BlockType) Block {
 
 	var newBlock Block
-	newBlock.Initial(height, parentHash, mpt, nonce, miner)
+	newBlock.Initial(height, parentHash, mpt, nonce, miner, blockType)
 
 	//fmt.Println(" blockHash : ", newBlock.Header.Hash)
 	return newBlock
