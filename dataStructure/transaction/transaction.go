@@ -7,7 +7,6 @@ import (
 	"log"
 	"strconv"
 	"time"
-	//s "../p5security"
 )
 
 type Transaction struct {
@@ -65,12 +64,7 @@ func (tx *Transaction) CreateTxSig(fromCid Identity) []byte {
 	return fromCid.GenSignature(tx.TransactionToJsonByteArray())
 }
 
-func (tx *Transaction) CreateTxSigForMiner(fromId Identity) []byte {
-	return fromId.GenSignature(tx.TransactionToJsonByteArray())
-}
-
 func VerifyTxSig(fromPid PublicIdentity, tx Transaction, txSig []byte) bool {
-
 	return VerifySingature(fromPid.PublicKey, tx.TransactionToJsonByteArray(), txSig)
 }
 

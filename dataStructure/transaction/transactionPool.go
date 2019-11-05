@@ -3,10 +3,14 @@ package transaction
 import (
 	"../../utils"
 	"bytes"
+	"encoding/json"
+	"github.com/EthSharding-Simulation/dataStructure/mpt"
 	"hash/fnv"
 	"log"
 	"sync"
 )
+
+// ToDo: Check for duplicate transaction before inserting.
 
 //this is for mining
 type TransactionPool struct {
@@ -91,6 +95,24 @@ func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
 	h := fnv.New32a()
 	h.Write([]byte(transaction.To.PublicIdentityToJson()))
 	return h.Sum32()%utils.TOTAL_SHARDS != txp.ShardId
+}
+
+// ToDo: Should we delete the transactions from transaction pool after building mpt?
+func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
+	txp.mux.Lock()
+	txp.mux.Unlock()
+	txMpt := mpt.MerklePatriciaTrie{}
+	txMpt.Initial()
+	if len(txp.Pool) < utils.MIN_TX_POOL_SIZE {
+		return txMpt, false
+	}
+	for i, _ := range txp.Pool {
+		transJson, err := json.Marshal(txp.Pool[i])
+		if err == nil {
+			txMpt.Insert(txp.Pool[i].Id, string(transJson))
+		}
+	}
+	return txMpt, true
 }
 
 //func (txp *TransactionPoolJson) EncodeToJsonTransactionPoolJson() string {
