@@ -42,8 +42,7 @@ func (tx *Transaction) genId() string {
 		tx.ToTxId +
 		strconv.FormatFloat(float64(tx.Tokens), 'f', -1, 64) +
 		strconv.FormatFloat(float64(tx.Fees), 'f', -1, 64) +
-		tx.TxType +
-		tx.Timestamp.String()
+		tx.TxType
 	sum := sha3.Sum256([]byte(str))
 	return hex.EncodeToString(sum[:])
 }

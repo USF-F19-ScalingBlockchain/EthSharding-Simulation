@@ -30,7 +30,6 @@ func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, O
 
 func (shard *Shard) genId() string {
 	str := shard.ShardChainRoot +
-		shard.Timestamp.String() +
 		shard.Id +
 		shard.ProposerNode +
 		mapToString(shard.OpenTransactionSet)

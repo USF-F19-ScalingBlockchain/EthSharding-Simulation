@@ -12,3 +12,4 @@ var MAX_SHARD_POOL_THRESHOLD = TOTAL_SHARDS // Maximum TOTAL_SHARDS Shard Root h
 
 /* Beacon Id */
 var BEACON_ID = 9999
+

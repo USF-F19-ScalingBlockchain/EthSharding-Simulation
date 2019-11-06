@@ -11,12 +11,12 @@ import (
 )
 
 
-var beaconPeers = peerList.NewPeerList(int32(utils.BEACON_ID))
-var shardPeers = map[int]peerList.PeerList{}
+var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID))
+var shardPeers = map[uint32]peerList.PeerList{}
 
 type RegisterInfo struct {
 	Address string `json:"address"`
-	ShardId int `json:"shardId"`
+	ShardId uint32 `json:"shardId"`
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		beaconPeers.Add(registerInfo.Address)
 	} else {
 		if _, ok := shardPeers[registerInfo.ShardId]; !ok {
-			shardPeers[registerInfo.ShardId] = peerList.NewPeerList(int32(registerInfo.ShardId))
+			shardPeers[registerInfo.ShardId] = peerList.NewPeerList(registerInfo.ShardId)
 		}
 		sp := shardPeers[registerInfo.ShardId]
 		sp.Add(registerInfo.Address)
@@ -60,7 +60,7 @@ func GetPeers(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(beaconPeersJson))
 	} else {
-		if val, ok := shardPeers[shardId]; ok {
+		if val, ok := shardPeers[uint32(shardId)]; ok {
 			shardPeersJson, err := val.PeerMapToJson()
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)

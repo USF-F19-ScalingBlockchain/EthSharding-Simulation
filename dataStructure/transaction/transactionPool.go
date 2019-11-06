@@ -18,10 +18,6 @@ type TransactionPool struct {
 	mux     sync.Mutex
 }
 
-//type TransactionPoolJson struct {
-//	Pool map[string]Transaction `json:"pool"`
-//}
-
 func NewTransactionPool(shardId uint32) TransactionPool {
 	return TransactionPool{
 		Pool:    make(map[string]Transaction),

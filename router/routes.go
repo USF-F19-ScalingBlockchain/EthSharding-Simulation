@@ -18,21 +18,37 @@ var routes = Routes{
 	Route{
 		"Register",
 		"POST",
-		"/register",
+		"/register/",
 		handlers.Register, // Registration server
 	},
 	Route{
-		"Register",
+		"GetPeers",
 		"GET",
 		"/register/peers/{shardId}",
 		handlers.GetPeers, // Registration server
 	},
 	Route{
-		"BeaconReceive",
+		"RegisterShard",
 		"POST",
-		"/beacon/block/receive",
-		handlers.BeaconReceive, // beacon server
+		"/shard/peers/",
+		handlers.RegisterShard, // Shard server
 	},
-
-
+	Route{
+		"startShardMiner",
+		"GET",
+		"/start/shard/",
+		handlers.StartShardMiner, // Shard server
+	},
+	Route{
+		"GetPeerListForShard",
+		"GET",
+		"/shard/peers/",
+		handlers.GetPeerListForShard, // Shard server
+	},
+	Route{
+		"PostTransactionToShard",
+		"POST",
+		"/shard/{shardId}/transaction/", // Shard server
+		handlers.AddTransaction,
+	},
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type PeerList struct {
-	shardId   int32
+	shardId   uint32
 	peerMap   map[string]bool // <Host:Port, shardId>
 	mux       sync.Mutex
 }
@@ -18,7 +18,7 @@ type PeerList struct {
 /**
 Creates new PeerList
 */
-func NewPeerList(id int32) PeerList {
+func NewPeerList(id uint32) PeerList {
 	return PeerList{id, map[string]bool{}, sync.Mutex{}}
 }
 
@@ -61,7 +61,7 @@ func (peers *PeerList) Show() string {
 /**
 Sets the self id in peerList.
 */
-func (peers *PeerList) Register(id int32) {
+func (peers *PeerList) Register(id uint32) {
 	peers.shardId = id
 	fmt.Printf("SelfId=%v\n", id)
 }
@@ -81,7 +81,7 @@ func (peers *PeerList) Copy() map[string]bool {
 /**
 It will get self id from PeerList.
 */
-func (peers *PeerList) GetShardId() int32 {
+func (peers *PeerList) GetShardId() uint32 {
 	return peers.shardId
 }
 
