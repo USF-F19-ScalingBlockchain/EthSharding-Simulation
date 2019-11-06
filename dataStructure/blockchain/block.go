@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"../mpt"
-	t "../transaction"
+	"github.com/EthSharding-Simulation/dataStructure/mpt"
+	t "github.com/EthSharding-Simulation/dataStructure/transaction"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -20,7 +20,7 @@ type Head struct {
 	Size       int32  // `json:"parenthash"`
 	Nonce      string //'json:"nonce"'
 	Miner      t.PublicIdentity
-	BlockType BlockType
+	BlockType  BlockType
 }
 
 type BlockType int

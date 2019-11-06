@@ -1,10 +1,10 @@
 package transaction
 
 import (
-	"github.com/EthSharding-Simulation/utils"
 	"bytes"
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure/mpt"
+	"github.com/EthSharding-Simulation/utils"
 	"hash/fnv"
 	"log"
 	"sync"

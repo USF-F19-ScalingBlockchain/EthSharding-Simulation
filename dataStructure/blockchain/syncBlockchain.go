@@ -3,8 +3,8 @@ package blockchain
 import (
 	"sync"
 
-	"../mpt"
-	s "../transaction"
+	"github.com/EthSharding-Simulation/dataStructure/mpt"
+	s "github.com/EthSharding-Simulation/dataStructure/transaction"
 )
 
 //SyncBlockChain struct is main - shared - common - datastu

@@ -7,17 +7,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"golang.org/x/crypto/sha3"
-
-	//"encoding/pem"
-	"hash"
-	//"math/big"
-
-	//"crypto/sha256"
-	//"crypto/x509"
-	//"encoding/hex"
 	"fmt"
-	//"golang.org/x/crypto/sha3"
+	"golang.org/x/crypto/sha3"
+	"hash"
 	"log"
 )
 
