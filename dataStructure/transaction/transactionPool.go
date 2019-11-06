@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"../../utils"
+	"github.com/EthSharding-Simulation/utils"
 	"bytes"
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure/mpt"
@@ -9,8 +9,6 @@ import (
 	"log"
 	"sync"
 )
-
-// ToDo: Check for duplicate transaction before inserting.
 
 //this is for mining
 type TransactionPool struct {
@@ -97,7 +95,6 @@ func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
 	return h.Sum32()%utils.TOTAL_SHARDS != txp.ShardId
 }
 
-// ToDo: Should we delete the transactions from transaction pool after building mpt?
 func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	txp.mux.Lock()
 	txp.mux.Unlock()

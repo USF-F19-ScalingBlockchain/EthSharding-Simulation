@@ -7,8 +7,6 @@ import (
 	"sync"
 )
 
-// ToDo: Check for duplicate shard before inserting.
-
 type ShardPool struct {
 	Pool 	map[string]Shard
 	mux  	sync.Mutex

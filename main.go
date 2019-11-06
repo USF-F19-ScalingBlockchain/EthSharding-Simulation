@@ -1,27 +1,22 @@
 package main
 
-import "fmt"
-
-type BlockType int
-
-const(
-	SHARD BlockType = 0
-	TRANSACTION BlockType = 1
+import (
+	"github.com/EthSharding-Simulation/router"
+	"log"
+	"net/http"
+	"os"
 )
-func (blockType BlockType) String() string {
-	switch blockType {
-	case SHARD:
-		return "SHARD"
-	case TRANSACTION:
-		return "TRANSACTION"
-	default:
-		return ""
-	}
-}
 
 func main() {
-	fmt.Println("start ..")
-	var s string
-	s = SHARD.String()
-	fmt.Println(s)
+	router := router.NewRouter()
+	if len(os.Args) == 3 {
+		// shard id miner
+		// initShardMiner()
+		log.Fatal(http.ListenAndServe(":"+os.Args[1], router))
+	} else if len(os.Args) == 2 {
+		// initBeaconMiner()
+		log.Fatal(http.ListenAndServe(":"+os.Args[1], router))
+	} else {
+		log.Fatal(http.ListenAndServe(":6689", router))
+	}
 }
