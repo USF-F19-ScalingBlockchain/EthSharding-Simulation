@@ -26,6 +26,13 @@ func NewTransactionPool(shardId uint32) TransactionPool {
 	}
 }
 
+func (txp *TransactionPool) ContainsInTransactionPool(tx Transaction) bool {
+	if _, ok := txp.Pool[tx.Id]; ok {
+		return true
+	}
+	return false
+}
+
 func (txp *TransactionPool) AddToTransactionPool(tx Transaction) { //duplicates in transactinon pool
 	txp.mux.Lock()
 	defer txp.mux.Unlock()

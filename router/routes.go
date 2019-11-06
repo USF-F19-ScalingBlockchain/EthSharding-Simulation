@@ -51,4 +51,10 @@ var routes = Routes{
 		"/shard/{shardId}/transaction/", // Shard server
 		handlers.AddTransaction,
 	},
+	Route{
+		"GetTransactionsInPool",
+		"GET",
+		"/shard/{shardId}/transactionPool/", // Shard server
+		handlers.ShowAllTransactionsInPool,
+	},
 }

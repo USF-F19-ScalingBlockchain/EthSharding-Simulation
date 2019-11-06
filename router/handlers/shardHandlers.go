@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"github.com/EthSharding-Simulation/router"
 	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"net/http"
@@ -62,14 +63,14 @@ func RegisterShard(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	defer r.Body.Close()
 	registerInfo := RegisterInfo{}
 	err = json.Unmarshal(reqBody, &registerInfo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	sameShardPeers.Add(registerInfo.Address)
 	w.WriteHeader(http.StatusOK)
@@ -79,12 +80,48 @@ func GetPeerListForShard(w http.ResponseWriter, r *http.Request) {
 	respBody, err := sameShardPeers.PeerMapToJson()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(respBody))
+	w.Write([]byte(respBody))
 }
 
 func AddTransaction(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	defer r.Body.Close()
+	message := router.Message{}
+	if message.Type != router.TRANSACTION {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	err = json.Unmarshal(reqBody, &message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	transactionPool.AddToTransactionPool(message.Transaction)
+	go BroadcastTransaction(message)
+}
 
+func BroadcastTransaction(message router.Message) {
+	if message.HopCount > 0 {
+		message.HopCount = message.HopCount - 1
+		messageJson, err := json.Marshal(message)
+		if err == nil {
+			for k, _ := range sameShardPeers.Copy() {
+				_, err := http.Post(k + "/shard/" + strconv.Itoa(int(SHARD_ID)) + "/transaction/", "application/json", bytes.NewBuffer(messageJson))
+				if err != nil {
+					sameShardPeers.Delete(k)
+				}
+			}
+		}
+	}
+}
+
+func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(transactionPool.Show()))
 }

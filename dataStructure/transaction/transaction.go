@@ -13,21 +13,15 @@ type Transaction struct {
 	Id        string         `json:"id"`
 	From      PublicIdentity `json:"from"`
 	To        PublicIdentity `json:"to"` //if To is empty then its a borrowing tx
-	ToTxId    string         `json:"toTxId"`
 	Tokens    float64        `json:"tokens"`
-	Fees      float64        `json:"fees"`
-	TxType    string         `json:"txtype"`
 	Timestamp time.Time      `json:"timestamp"`
 }
 
-func NewTransaction(from PublicIdentity, to PublicIdentity, toTxId string, tokens float64, fees float64, txType string) Transaction {
+func NewTransaction(from PublicIdentity, to PublicIdentity, tokens float64) Transaction {
 	tx := Transaction{
 		From:      from,
 		To:        to,
-		ToTxId:    toTxId,
 		Tokens:    tokens,
-		Fees:      fees,
-		TxType:    txType,
 		Timestamp: time.Now(),
 	}
 
@@ -39,10 +33,7 @@ func NewTransaction(from PublicIdentity, to PublicIdentity, toTxId string, token
 func (tx *Transaction) genId() string {
 	str := tx.From.PublicIdentityToJson() +
 		tx.To.PublicIdentityToJson() +
-		tx.ToTxId +
-		strconv.FormatFloat(float64(tx.Tokens), 'f', -1, 64) +
-		strconv.FormatFloat(float64(tx.Fees), 'f', -1, 64) +
-		tx.TxType
+		strconv.FormatFloat(float64(tx.Tokens), 'f', -1, 64)
 	sum := sha3.Sum256([]byte(str))
 	return hex.EncodeToString(sum[:])
 }
@@ -51,10 +42,7 @@ func (tx *Transaction) Show() string {
 	str := "\ntx id :" + tx.Id +
 		"\ntx From :" + tx.From.PublicIdentityToJson() +
 		"\ntx To :" + tx.To.PublicIdentityToJson() +
-		"\ntx ToTxId :" + tx.ToTxId +
 		"\ntx Tokens :" + strconv.FormatFloat(float64(tx.Tokens), 'f', -1, 64) +
-		"\ntx Fees :" + strconv.FormatFloat(float64(tx.Fees), 'f', -1, 64) +
-		"\ntx Type :" + tx.TxType +
 		"\ntx Time :" + tx.Timestamp.String() + "\n"
 	return str
 }
