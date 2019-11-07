@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
@@ -29,7 +28,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			newPeers := peerList.NewPeerList(SHARD_ID)
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			for server, _ := range newPeers.Copy() {
-				RegisterToServer(server+"/shard/peers/")
+				go RegisterToServer(server+"/shard/peers/")
 				sameShardPeers.Add(server)
 			}
 		}
@@ -99,9 +98,6 @@ func BroadcastTransaction(message dataStructure.Message) {
 }
 
 func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
-	transaction := transaction.NewTransaction("abc", "def", 45.5)
-	transactionPool.AddToTransactionPool(transaction)
-	fmt.Println(transactionPool.Show())
-	w.Write([]byte(transactionPool.Show()))
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(transactionPool.Show()))
 }

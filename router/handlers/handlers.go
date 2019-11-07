@@ -22,6 +22,7 @@ var transactionPool = transaction.NewTransactionPool(SHARD_ID)
 // start registration server
 var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID)) // also used by beacon miner
 var shardPeers = map[uint32]peerList.PeerList{}                 // also used by beacon miner
+var identity transaction.Identity
 // end registration server
 
 func RegisterToServer(url string) {
