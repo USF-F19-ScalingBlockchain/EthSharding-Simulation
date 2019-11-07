@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"io/ioutil"
 	"log"
@@ -12,7 +13,27 @@ import (
 func InitBeaconHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
+	//beaconPeers
+	//shardPeers
+}
+
+func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 	RegisterToServer()
+	//todo : get all peers for beacon
+	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
+	if err == nil && resp.StatusCode != http.StatusBadRequest {
+		respBytes, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			respBody := string(respBytes)
+			newBeaconPeers := peerList.NewPeerList(SHARD_ID)
+			newBeaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
+			for k, _ := range newBeaconPeers.Copy() {
+				RegisterToPeers(k)
+				beaconPeers.Add(k)
+			}
+		}
+	}
+
 }
 
 func TxReceive(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +63,8 @@ func sendPostReq(reqBody []byte, shardId uint32) bool {
 		client.Do(req) // sending tx message to "one" shard miner
 		return true
 	} else {
+		//todo :get all peers for that shardId
+		// if good response
 		return false
 	}
 }
