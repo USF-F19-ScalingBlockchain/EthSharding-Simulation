@@ -9,6 +9,12 @@ import (
 	"strconv"
 )
 
+func InitBeaconHandler(host string, port int32, shardId uint32) {
+	SHARD_ID = shardId
+	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
+	RegisterToServer()
+}
+
 func TxReceive(w http.ResponseWriter, r *http.Request) {
 	reqBody := readRequestBody(w, r)
 
