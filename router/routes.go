@@ -24,7 +24,7 @@ var routes = Routes{
 	Route{
 		"GetPeers",
 		"GET",
-		"/register/peers/{shardId}",
+		"/register/peers/{shardId}/",
 		handlers.GetPeers, // Registration server
 	},
 	Route{
@@ -56,5 +56,11 @@ var routes = Routes{
 		"GET",
 		"/shard/{shardId}/transactionPool/", // Shard server
 		handlers.ShowAllTransactionsInPool,
+	},
+	Route{
+		"TxReceive",
+		"POST",
+		"/beacon/Tx/receive/",
+		handlers.TxReceive, // beacon server
 	},
 }

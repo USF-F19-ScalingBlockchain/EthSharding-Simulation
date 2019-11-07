@@ -10,10 +10,6 @@ import (
 	"strconv"
 )
 
-
-var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID))
-var shardPeers = map[uint32]peerList.PeerList{}
-
 type RegisterInfo struct {
 	Address string `json:"address"`
 	ShardId uint32 `json:"shardId"`

@@ -7,14 +7,16 @@ import (
 
 type MessageType int
 
-const(
+const (
 	TRANSACTION MessageType = 0
-	BLOCK 	MessageType = 1
+	BLOCK       MessageType = 1
 )
 
 type Message struct {
-	Type		MessageType
+	Type        MessageType
 	Transaction transaction.Transaction
-	Block 		blockchain.Block
-	HopCount 	int32
+	Block       blockchain.Block
+	HopCount    int32
+	Signature   string
+	publicKey   string
 }

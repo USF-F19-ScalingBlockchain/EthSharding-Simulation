@@ -86,15 +86,21 @@ func (txp *TransactionPool) ReadFromTransactionPool(n int) map[string]Transactio
 	return tempMap
 }
 
+func (txp *TransactionPool) GetShardId(fromField string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(fromField))
+	return h.Sum32() % utils.TOTAL_SHARDS
+}
+
 func (txp *TransactionPool) matchShard(transaction Transaction) bool {
 	h := fnv.New32a()
-	h.Write([]byte(transaction.From.PublicIdentityToJson()))
+	h.Write([]byte(transaction.From))
 	return h.Sum32()%utils.TOTAL_SHARDS == txp.ShardId
 }
 
 func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
 	h := fnv.New32a()
-	h.Write([]byte(transaction.To.PublicIdentityToJson()))
+	h.Write([]byte(transaction.To))
 	return h.Sum32()%utils.TOTAL_SHARDS != txp.ShardId
 }
 

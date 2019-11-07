@@ -10,9 +10,9 @@ import (
 )
 
 type PeerList struct {
-	shardId   uint32
-	peerMap   map[string]bool // <Host:Port, shardId>
-	mux       sync.Mutex
+	shardId uint32
+	peerMap map[string]bool // <Host:Port, shardId>
+	mux     sync.Mutex
 }
 
 /**
@@ -71,7 +71,7 @@ Copies the peermap to new buffer and returns
 the current picture of peermap.
 */
 func (peers *PeerList) Copy() map[string]bool {
-	newMap := make(map[string]bool);
+	newMap := make(map[string]bool)
 	for k, v := range peers.peerMap {
 		newMap[k] = v
 	}
@@ -112,4 +112,12 @@ func (peers *PeerList) InjectPeerMapJson(peerMapJsonStr string, selfAddr string)
 			peers.peerMap[k] = v
 		}
 	}
+}
+
+//
+func (peers *PeerList) GetAPeer() string {
+	for peerAdd, _ := range peers.peerMap {
+		return peerAdd
+	}
+	return ""
 }

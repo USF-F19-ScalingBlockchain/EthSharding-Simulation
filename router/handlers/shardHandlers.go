@@ -6,18 +6,10 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/router"
-	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 )
-
-var SHARD_ID = uint32(utils.BEACON_ID)
-var REGISTRATION_SERVER = "http://localhost:6689"
-var SELF_ADDR = "http://localhost:6689"
-
-var sameShardPeers = peerList.NewPeerList(SHARD_ID)
-var transactionPool = transaction.NewTransactionPool(SHARD_ID)
 
 func InitShardHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
@@ -47,7 +39,7 @@ func RegisterToServer() {
 	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
 	registerInfoJson, err := json.Marshal(registerInfo)
 	if err == nil {
-		http.Post(REGISTRATION_SERVER + "/register/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
+		http.Post(REGISTRATION_SERVER+"/register/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
 	}
 }
 
@@ -55,7 +47,7 @@ func RegisterToPeers(server string) {
 	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
 	registerInfoJson, err := json.Marshal(registerInfo)
 	if err == nil {
-		http.Post(server + "/shard/peers/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
+		http.Post(server+"/shard/peers/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
 	}
 }
 
@@ -112,7 +104,7 @@ func BroadcastTransaction(message router.Message) {
 		messageJson, err := json.Marshal(message)
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
-				_, err := http.Post(k + "/shard/" + strconv.Itoa(int(SHARD_ID)) + "/transaction/", "application/json", bytes.NewBuffer(messageJson))
+				_, err := http.Post(k+"/shard/"+strconv.Itoa(int(SHARD_ID))+"/transaction/", "application/json", bytes.NewBuffer(messageJson))
 				if err != nil {
 					sameShardPeers.Delete(k)
 				}
