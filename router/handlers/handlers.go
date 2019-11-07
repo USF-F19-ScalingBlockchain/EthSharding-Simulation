@@ -24,10 +24,10 @@ var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID)) // also used by 
 var shardPeers = map[uint32]peerList.PeerList{}                 // also used by beacon miner
 // end registration server
 
-func RegisterToServer() {
+func RegisterToServer(url string) {
 	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
 	registerInfoJson, err := json.Marshal(registerInfo)
 	if err == nil {
-		http.Post(REGISTRATION_SERVER+"/register/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
+		http.Post(url, "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
 	}
 }
