@@ -63,4 +63,22 @@ var routes = Routes{
 		"/beacon/Tx/receive/",
 		handlers.TxReceive, // beacon server
 	},
+	Route{
+		"StartBeaconMiner",
+		"GET",
+		"/start/beacon/",
+		handlers.StartBeaconMiner, // beacon server
+	},
+	Route{
+		"RegisterBeaconPeer",
+		"POST",
+		"/beacon/peers/",
+		handlers.RegisterBeaconPeer, // beacon server
+	},
+	Route{
+		"GetBeaconPeers",
+		"GET",
+		"/beacon/peers/",
+		handlers.GetPeerListForBeacon, // beacon server
+	},
 }
