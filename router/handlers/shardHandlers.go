@@ -35,22 +35,6 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RegisterToServer() {
-	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
-	registerInfoJson, err := json.Marshal(registerInfo)
-	if err == nil {
-		http.Post(REGISTRATION_SERVER+"/register/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
-	}
-}
-
-func RegisterToPeers(server string) {
-	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
-	registerInfoJson, err := json.Marshal(registerInfo)
-	if err == nil {
-		http.Post(server+"/shard/peers/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
-	}
-}
-
 func RegisterShard(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
