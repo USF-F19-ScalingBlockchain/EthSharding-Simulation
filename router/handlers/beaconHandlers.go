@@ -13,12 +13,10 @@ import (
 func InitBeaconHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
-	//beaconPeers
-	//shardPeers
 }
 
 func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer()
+	RegisterToServer(REGISTRATION_SERVER+"/register/")
 	//todo : get all peers for beacon
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
@@ -28,17 +26,15 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 			newBeaconPeers := peerList.NewPeerList(SHARD_ID)
 			newBeaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			for k, _ := range newBeaconPeers.Copy() {
-				RegisterToPeers(k)
+				RegisterToServer(k)
 				beaconPeers.Add(k)
 			}
 		}
 	}
-
 }
 
 func TxReceive(w http.ResponseWriter, r *http.Request) {
 	reqBody := readRequestBody(w, r)
-
 	tx := transaction.JsonToTransaction(string(reqBody))
 	shardId := transactionPool.GetShardId(tx.From)
 	//todo : create a message from submitted transaction

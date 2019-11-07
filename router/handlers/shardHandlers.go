@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
@@ -19,7 +20,7 @@ func InitShardHandler(host string, port int32, shardId uint32) {
 }
 
 func StartShardMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer()
+	RegisterToServer(REGISTRATION_SERVER+"/register/")
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -27,19 +28,11 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			respBody := string(respBytes)
 			newPeers := peerList.NewPeerList(SHARD_ID)
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
-			for k, _ := range newPeers.Copy() {
-				RegisterToPeers(k)
-				sameShardPeers.Add(k)
+			for server, _ := range newPeers.Copy() {
+				RegisterToServer(server+"/shard/peers/")
+				sameShardPeers.Add(server)
 			}
 		}
-	}
-}
-
-func RegisterToPeers(server string) {
-	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
-	registerInfoJson, err := json.Marshal(registerInfo)
-	if err == nil {
-		http.Post(server+"/shard/peers/", "application/json", bytes.NewBuffer([]byte(registerInfoJson)))
 	}
 }
 
@@ -106,8 +99,9 @@ func BroadcastTransaction(message dataStructure.Message) {
 }
 
 func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	transaction := transaction.NewTransaction("abc", "def", 45.5)
 	transactionPool.AddToTransactionPool(transaction)
+	fmt.Println(transactionPool.Show())
 	w.Write([]byte(transactionPool.Show()))
+	w.WriteHeader(http.StatusOK)
 }
