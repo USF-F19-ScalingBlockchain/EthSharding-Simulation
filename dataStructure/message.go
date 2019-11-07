@@ -1,4 +1,4 @@
-package router
+package dataStructure
 
 import (
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"

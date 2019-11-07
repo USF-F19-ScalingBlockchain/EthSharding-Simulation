@@ -3,9 +3,9 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
-	"github.com/EthSharding-Simulation/router"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -85,8 +85,8 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	defer r.Body.Close()
-	message := router.Message{}
-	if message.Type != router.TRANSACTION {
+	message := dataStructure.Message{}
+	if message.Type != dataStructure.TRANSACTION {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	err = json.Unmarshal(reqBody, &message)
@@ -98,7 +98,7 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 	go BroadcastTransaction(message)
 }
 
-func BroadcastTransaction(message router.Message) {
+func BroadcastTransaction(message dataStructure.Message) {
 	if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1
 		messageJson, err := json.Marshal(message)
@@ -115,5 +115,7 @@ func BroadcastTransaction(message router.Message) {
 
 func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+	transaction := transaction.NewTransaction("abc", "def", 45.5)
+	transactionPool.AddToTransactionPool(transaction)
 	w.Write([]byte(transactionPool.Show()))
 }

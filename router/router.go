@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
