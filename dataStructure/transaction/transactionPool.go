@@ -115,7 +115,8 @@ func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	for i, _ := range txp.pool {
 		transJson, err := json.Marshal(txp.pool[i])
 		if err == nil {
-			txMpt.Insert(txp.pool[i].Id, string(transJson))
+			txMpt.Insert(i, string(transJson))
+			delete(txp.pool, i)
 		}
 	}
 	return txMpt, true

@@ -43,12 +43,12 @@ var routes = Routes{
 		"GetPeerListForShard",
 		"GET",
 		"/shard/peers/",
-		handlers.GetPeerListForShard, // Shard server
+		handlers.GetPeerListForShard, // Shard server - for UI
 	},
 	Route{
 		"PostTransactionToShard",
 		"POST",
-		"/shard/{shardId}/transaction/", // Shard server
+		"/shard/transaction/", // Shard server
 		handlers.AddTransaction,
 	},
 	Route{
@@ -80,5 +80,17 @@ var routes = Routes{
 		"GET",
 		"/beacon/peers/",
 		handlers.GetPeerListForBeacon, // beacon server
+	},
+	Route{
+		"GetShardChain",
+		"GET",
+		"/shard/upload/",
+		handlers.UploadBlockchain, // Shard server
+	},
+	Route{
+		"PostBlockToShard",
+		"POST",
+		"/shard/block/",
+		handlers.GetBlock,
 	},
 }

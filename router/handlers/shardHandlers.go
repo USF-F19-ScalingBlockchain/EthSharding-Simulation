@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure"
+	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strconv"
 )
@@ -16,6 +18,7 @@ func InitShardHandler(host string, port int32, shardId uint32) {
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
 	transactionPool = transaction.NewTransactionPool(SHARD_ID)
 	sameShardPeers = peerList.NewPeerList(SHARD_ID)
+	sbc = blockchain.NewBlockChain()
 }
 
 func StartShardMiner(w http.ResponseWriter, r *http.Request) {
@@ -27,10 +30,25 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			respBody := string(respBytes)
 			newPeers := peerList.NewPeerList(SHARD_ID)
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
+			flag := false
 			for server, _ := range newPeers.Copy() {
 				go RegisterToServer(server+"/shard/peers/")
 				sameShardPeers.Add(server)
+				if !flag {
+					DownloadBlockchain(server)
+					flag = true
+				}
 			}
+		}
+	}
+}
+
+func DownloadBlockchain(server string) {
+	resp, err := http.Get(server + "/shard/upload/")
+	if err == nil {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			sbc.UpdateEntireBlockChain(string(respBody))
 		}
 	}
 }
@@ -88,7 +106,7 @@ func BroadcastTransaction(message dataStructure.Message) {
 		messageJson, err := json.Marshal(message)
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
-				_, err := http.Post(k+"/shard/"+strconv.Itoa(int(SHARD_ID))+"/transaction/", "application/json", bytes.NewBuffer(messageJson))
+				_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
 				if err != nil {
 					sameShardPeers.Delete(k)
 				}
@@ -100,4 +118,45 @@ func BroadcastTransaction(message dataStructure.Message) {
 func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(transactionPool.Show()))
+}
+
+func GetBlock(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func GenShardBlock() {
+	for {
+		mpt, flag := transactionPool.BuildMpt()
+		if flag {
+			latestBlocks := sbc.GetLatestBlocks()
+			var latestBlock blockchain.Block
+			if latestBlocks != nil && len(latestBlocks) != 0 {
+				latestBlock = latestBlocks[rand.Intn(len(latestBlocks))]
+			}
+			for latestBlocks == nil || latestBlock.Header.Height == sbc.GetLatestBlocks()[0].Header.Height {
+				parentHash := "Genesis"
+				if latestBlocks != nil {
+					parentHash = latestBlock.Header.Hash
+				}
+				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.GetMyPublicIdentity(), blockchain.TRANSACTION)
+				sbc.Insert(block)
+			}
+		}
+	}
+}
+
+func BroadcastBlock(block blockchain.Block) {
+	// ToDo: broadcast block to peers with same shard id.
+}
+
+func UploadBlockchain(w http.ResponseWriter, r *http.Request) {
+	blockChainJson, err := sbc.BlockChainToJson()
+	if err != nil {
+		//data.PrintError(err, "Upload")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(blockChainJson))
+	}
 }

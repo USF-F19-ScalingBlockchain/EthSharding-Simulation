@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
@@ -16,7 +17,7 @@ var SELF_ADDR = "http://localhost:6689"
 var SHARD_ID = uint32(utils.BEACON_ID)
 var sameShardPeers = peerList.NewPeerList(SHARD_ID)
 var transactionPool = transaction.NewTransactionPool(SHARD_ID)
-
+var sbc blockchain.SyncBlockChain
 // end shard sever
 
 // start registration server

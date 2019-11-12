@@ -70,8 +70,8 @@ func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePat
 	block.Header.Size = int32(len([]byte(block.Value.String()))) // mpt converted to string and then to byte array
 	block.Header.Nonce = nonce
 	block.Header.Miner = miner
-	block.Header.Hash = block.Hash()
 	block.Header.BlockType = blockType
+	block.Header.Hash = block.Hash()
 
 }
 
@@ -124,7 +124,7 @@ func DecodeToBlock(height int32, timestamp int64, hash string, parentHash string
 }
 
 // EncodeToJSON func takes type Block and converts it into json string
-func EncodeToJSON(block *Block) string {
+func (block *Block) EncodeToJSON() string {
 
 	blockForJson := BlockJson{
 		Height:     block.Header.Height,
