@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -157,4 +158,12 @@ func (block *Block) Hash() string {
 
 	sum := sha3.Sum256([]byte(hashStr))
 	return "HashStart_" + hex.EncodeToString(sum[:]) + "_HashEnd"
+}
+
+func (block *Block) CreateBlockSig(fromCid t.Identity) []byte {
+	return fromCid.GenSignature([]byte(block.EncodeToJSON()))
+}
+
+func VerifyBlockSig(fromPid *rsa.PublicKey, block Block, signature string) bool {
+	return t.VerifySingature(fromPid, []byte(block.EncodeToJSON()), []byte(signature))
 }

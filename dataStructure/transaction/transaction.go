@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
 	"golang.org/x/crypto/sha3"
@@ -51,8 +52,8 @@ func (tx *Transaction) CreateTxSig(fromCid Identity) []byte {
 	return fromCid.GenSignature(tx.TransactionToJsonByteArray())
 }
 
-func VerifyTxSig(fromPid PublicIdentity, tx Transaction, txSig []byte) bool {
-	return VerifySingature(fromPid.PublicKey, tx.TransactionToJsonByteArray(), txSig)
+func VerifyTxSig(fromPid *rsa.PublicKey, tx Transaction, txSig []byte) bool {
+	return VerifySingature(fromPid, tx.TransactionToJsonByteArray(), txSig)
 }
 
 func (tx *Transaction) TransactionToJsonByteArray() []byte {

@@ -1,7 +1,7 @@
 package dataStructure
 
 import (
-	"crypto"
+	"crypto/rsa"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
@@ -23,5 +23,29 @@ type Message struct {
 	Shard       shard.Shard
 	HopCount    int32
 	Signature   string // signature of miner
-	PublicKey   *crypto.PublicKey
+	PublicKey   *rsa.PublicKey
+}
+
+func (message *Message) Sign(identity transaction.Identity) {
+	if message.Type == TRANSACTION {
+		message.Signature = string(message.Transaction.CreateTxSig(identity))
+		message.PublicKey = identity.PublicKey
+	} else if message.Type == BLOCK {
+		message.Signature = string(message.Block.CreateBlockSig(identity))
+		message.PublicKey = identity.PublicKey
+	} else if message.Type == SHARD {
+		message.Signature = string(message.Shard.CreateShSig(identity))
+		message.PublicKey = identity.PublicKey
+	}
+}
+
+func (message *Message) Verify() bool {
+	if message.Type == TRANSACTION {
+		return transaction.VerifyTxSig(message.PublicKey, message.Transaction, []byte(message.Signature))
+	} else if message.Type == BLOCK {
+		return blockchain.VerifyBlockSig(message.PublicKey, message.Block, message.Signature)
+	} else if message.Type == SHARD {
+		return shard.VerifyShSig(message.PublicKey, message.Shard, []byte(message.Signature))
+	}
+	return false
 }

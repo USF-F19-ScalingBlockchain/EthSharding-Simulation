@@ -24,7 +24,7 @@ var sbc blockchain.SyncBlockChain
 // start registration server
 var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID)) // also used by beacon miner
 var shardPeers = map[uint32]peerList.PeerList{}
-var identity transaction.Identity
+var identity = transaction.NewIdentity()
 
 // end registration server
 
