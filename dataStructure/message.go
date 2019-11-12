@@ -24,6 +24,7 @@ type Message struct {
 	HopCount    int32
 	Signature   string // signature of miner
 	PublicKey   *rsa.PublicKey
+	NodeId		string
 }
 
 func (message *Message) Sign(identity transaction.Identity) {

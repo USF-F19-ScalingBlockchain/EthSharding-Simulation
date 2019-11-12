@@ -29,7 +29,7 @@ func (sbc *SyncBlockChain) GetLength() int32 {
 func (sbc *SyncBlockChain) Get(height int32) ([]Block, bool) {
 	sbc.mux.Lock()
 	defer sbc.mux.Unlock()
-	return sbc.bc.Get(height), false
+	return sbc.bc.Get(height)
 }
 
 // GetBlock func takes height and hash as parameter and returns a block
