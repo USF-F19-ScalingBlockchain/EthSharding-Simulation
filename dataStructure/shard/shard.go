@@ -16,7 +16,7 @@ type Shard struct {
 	Timestamp          time.Time
 	Id                 string
 	ProposerNode       string
-	OpenTransactionSet map[transaction.Transaction]bool
+	OpenTransactionSet map[string]string
 }
 
 func (s *Shard) Show() string {
@@ -27,14 +27,14 @@ func (s *Shard) Show() string {
 		"\nshard Proposer: " + s.ProposerNode +
 		"\nshard Time :" + s.Timestamp.String() + "\n")
 	sb.WriteString("Open Transaction Set:\n")
-	for key, _ := range s.OpenTransactionSet {
-		sb.WriteString(key.Show())
+	for _, val := range s.OpenTransactionSet {
+		sb.WriteString(val)
 	}
 
 	return sb.String()
 }
 
-func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[transaction.Transaction]bool) Shard {
+func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]string) Shard {
 	shard := Shard{
 		ShardChainRoot:     ShardChainRoot,
 		Timestamp:          Timestamp,
@@ -46,10 +46,7 @@ func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, O
 }
 
 func (shard *Shard) genId() string {
-	str := shard.ShardChainRoot +
-		shard.Id +
-		shard.ProposerNode +
-		mapToString(shard.OpenTransactionSet)
+	str := shard.Show()
 	sum := sha3.Sum256([]byte(str))
 	return hex.EncodeToString(sum[:])
 }
@@ -80,12 +77,4 @@ func JsonToShard(shardJson string) Shard {
 	}
 
 	return shard
-}
-
-func mapToString(m map[transaction.Transaction]bool) string {
-	s := ""
-	for key, _ := range m {
-		s += key.TransactionToJson()
-	}
-	return s
 }
