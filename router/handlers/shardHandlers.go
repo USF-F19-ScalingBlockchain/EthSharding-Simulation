@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func InitShardHandler(host string, port int32, shardId uint32) {
@@ -142,8 +143,59 @@ func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	transactionPool.DeleteTransactions(message.Block.Value)
-	sbc.Insert(message.Block)
+	if !sbc.CheckParentHash(message.Block) && message.Block.Header.Height-1 > 0 {
+		if AskForBlock(message.Block.Header.Height-1, message.Block.Header.ParentHash) {
+			sbc.Insert(message.Block)
+		}
+	} else {
+		sbc.Insert(message.Block)
+	}
 	go Broadcast(message, "/shard/block/")
+}
+
+func AskForBlock(height int32, parentHash string) bool {
+	peerList := sameShardPeers.Copy()
+	for i, _ := range peerList {
+		resp, err := http.Get(i + "/block/" + strconv.Itoa(int(height)) + "/" + parentHash)
+		if err == nil && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusInternalServerError {
+			body, err1 := ioutil.ReadAll(resp.Body)
+			if err1 == nil {
+				block := blockchain.DecodeFromJSON(string(body))
+				if !sbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
+					if AskForBlock(block.Header.Height-1, block.Header.ParentHash) {
+						sbc.Insert(block)
+						return true
+					}
+				} else {
+					sbc.Insert(block)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func UploadShardBlock(w http.ResponseWriter, r *http.Request) {
+	pathParam := strings.Split(r.URL.Path, "/")
+	height, err := strconv.ParseInt(pathParam[3], 10, 32)
+	fmt.Println(height)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	} else {
+		hash := pathParam[4]
+		fmt.Println(hash)
+		block, flag := sbc.GetBlock(int32(height), hash)
+
+		if !flag {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			blockJson := block.EncodeToJSON()
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(blockJson))
+		}
+	}
 }
 
 func GenShardBlock() {

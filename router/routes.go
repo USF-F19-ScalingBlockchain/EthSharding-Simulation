@@ -99,6 +99,12 @@ var routes = Routes{
 		"/shard/show/",
 		handlers.ShowShard, // Shard server
 	},
+	Route{
+		"GetShardBlockAtHeight",
+		"GET",
+		"/shard/block/{height}/{hash}",
+		handlers.UploadShardBlock,
+	},
 	//Route{
 	//	"GetBeaconChain",
 	//	"GET",
