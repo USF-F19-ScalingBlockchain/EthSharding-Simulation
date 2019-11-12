@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"io/ioutil"
@@ -19,6 +20,7 @@ func InitBeaconHandler(host string, port int32, shardId uint32) {
 
 	//beaconPeers
 	//shardPeers
+	//shardPool = beacon.NewShardPool()
 }
 
 func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +88,53 @@ func TxReceive(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ShowShardPool(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(shardPool.Show()))
+	} else if r.Method == http.MethodPost {
+
+	}
+}
+
+func AddToShardPool(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	defer r.Body.Close()
+	message := dataStructure.Message{}
+	if message.Type != dataStructure.SHARD {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	err = json.Unmarshal(reqBody, &message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	shardPool.AddToShardPool(message.Shard)
+	//go BroadcastShard(message) //todo : anurag styart here
+}
+
+//helper funcs
+
+//func BroadcastShard(message dataStructure.Message) {
+//	if message.HopCount > 0 {
+//		message.HopCount = message.HopCount - 1
+//		messageJson, err := json.Marshal(message)
+//		if err == nil {
+//			//for k, _ := range shardPeersForBeacon.Copy() {
+//			for k, _ := range shardPeersForBeacon {
+//				_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
+//				if err != nil {
+//					sameShardPeers.Delete(k)
+//				}
+//			}
+//		}
+//	}
+//}
+
 func sendTxPostReq(reqBody []byte, shardId uint32) bool {
 	client := http.Client{}
 
@@ -105,7 +154,6 @@ func sendTxPostReq(reqBody []byte, shardId uint32) bool {
 	}
 }
 
-//helper funcs
 func readRequestBody(w http.ResponseWriter, r *http.Request) []byte {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {

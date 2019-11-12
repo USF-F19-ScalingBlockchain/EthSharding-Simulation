@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
+	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
 	"net/http"
@@ -28,8 +29,11 @@ var identity = transaction.NewIdentity()
 
 // end registration server
 
-//
-var shardPeersForBeacon = map[uint32]string{} //start beacon server
+// start Beacon server
+var shardPeersForBeacon = map[uint32]string{} // beacon server
+var shardPool = shard.NewShardPool()
+
+// end of variables for beacon server
 
 // functions
 func RegisterToServer(url string) {

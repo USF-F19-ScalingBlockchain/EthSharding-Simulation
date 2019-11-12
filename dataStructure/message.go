@@ -20,7 +20,7 @@ type Message struct {
 	Type        MessageType
 	Transaction transaction.Transaction
 	Block       blockchain.Block
-	Shard       shard.Shard
+	Shard       shard.Shard //
 	HopCount    int32
 	Signature   string // signature of miner
 	PublicKey   *rsa.PublicKey

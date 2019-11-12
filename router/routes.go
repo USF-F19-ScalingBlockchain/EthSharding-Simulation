@@ -99,16 +99,16 @@ var routes = Routes{
 	//	"/beacon/upload/",
 	//	handlers.UploadBeaconChain, // Beacon server todo
 	//},
-	//Route{
-	//	"GetShardPool",
-	//	"GET",
-	//	"/beacon/shardpool/",
-	//	handlers.ShowShardPool, // Shard server todo
-	//},
-	//Route{
-	//	"PostShardPool",
-	//	"POST",
-	//	"/beacon/shardpool/",
-	//	handlers.AddToShardPool, // Shard server todo
-	//},
+	Route{
+		"ShowShardPool",
+		"GET",
+		"/beacon/shardpool/",
+		handlers.ShowShardPool, // Shard server
+	},
+	Route{
+		"AddToShardPool",
+		"POST",
+		"/beacon/shardpool/",
+		handlers.AddToShardPool, // Shard server todo
+	},
 }
