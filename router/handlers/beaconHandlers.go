@@ -41,7 +41,7 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 
 	var sb strings.Builder
 	sb.WriteString("::: Started BeaconMiner :::\n")
-	sb.WriteString(getBeaconPeers())
+	sb.WriteString(getBeaconMinerPeers())
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(sb.String()))
@@ -49,7 +49,7 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPeerListForBeacon(w http.ResponseWriter, r *http.Request) {
-	peersJson := getBeaconPeers()
+	peersJson := getBeaconMinerPeers()
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(peersJson))
@@ -105,6 +105,7 @@ func sendTxPostReq(reqBody []byte, shardId uint32) bool {
 	}
 }
 
+//helper funcs
 func readRequestBody(w http.ResponseWriter, r *http.Request) []byte {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -116,7 +117,7 @@ func readRequestBody(w http.ResponseWriter, r *http.Request) []byte {
 	return reqBody
 }
 
-func getBeaconPeers() string {
+func getBeaconMinerPeers() string {
 	var sb strings.Builder
 	sb.WriteString("Beacon Peers : \n")
 	beaconPeerJson, err := beaconPeers.PeerMapToJson()
@@ -127,8 +128,8 @@ func getBeaconPeers() string {
 	}
 
 	sb.WriteString("\nShard Peers : \n")
-	for peer := range shardPeers {
-
+	for shardId, shardPeer := range shardPeersForBeacon {
+		sb.WriteString("Shard Id: " + string(shardId) + ", Shard Peer: " + shardPeer + "\n")
 	}
 
 	return sb.String()

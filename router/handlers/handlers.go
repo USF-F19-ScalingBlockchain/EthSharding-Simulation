@@ -31,6 +31,7 @@ var identity transaction.Identity
 //
 var shardPeersForBeacon = map[uint32]string{} //start beacon server
 
+// functions
 func RegisterToServer(url string) {
 	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
 	registerInfoJson, err := json.Marshal(registerInfo)
