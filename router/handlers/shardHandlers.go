@@ -121,7 +121,23 @@ func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBlock(w http.ResponseWriter, r *http.Request) {
-
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	defer r.Body.Close()
+	message := dataStructure.Message{}
+	if message.Type != dataStructure.BLOCK {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	err = json.Unmarshal(reqBody, &message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	sbc.Insert(message.Block)
+	go BroadcastBlock(message)
 }
 
 func GenShardBlock() {
@@ -138,14 +154,21 @@ func GenShardBlock() {
 				if latestBlocks != nil {
 					parentHash = latestBlock.Header.Hash
 				}
-				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.GetMyPublicIdentity(), blockchain.TRANSACTION)
+				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.TRANSACTION)
 				sbc.Insert(block)
+				message := dataStructure.Message{
+					Type:        dataStructure.BLOCK,
+					Transaction: transaction.Transaction{},
+					Block:       block,
+					HopCount:    1,
+				}
+				message.Sign(identity)
 			}
 		}
 	}
 }
 
-func BroadcastBlock(block blockchain.Block) {
+func BroadcastBlock(message dataStructure.Message) {
 	// ToDo: broadcast block to peers with same shard id.
 }
 

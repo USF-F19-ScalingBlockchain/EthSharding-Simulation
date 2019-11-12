@@ -1,6 +1,7 @@
 package shard
 
 import (
+	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
@@ -37,12 +38,12 @@ func (shard *Shard) genId() string {
 	return hex.EncodeToString(sum[:])
 }
 
-func (shard *Shard) createShSig(id transaction.Identity) []byte {
+func (shard *Shard) CreateShSig(id transaction.Identity) []byte {
 	return id.GenSignature(shard.ShardToJsonByteArray())
 }
 
-func VerifyShSig(id transaction.Identity, shard Shard, sign []byte) bool {
-	return transaction.VerifySingature(id.PublicKey, shard.ShardToJsonByteArray(), sign)
+func VerifyShSig(id *rsa.PublicKey, shard Shard, sign []byte) bool {
+	return transaction.VerifySingature(id, shard.ShardToJsonByteArray(), sign)
 }
 
 func (shard *Shard) ShardToJsonByteArray() []byte {

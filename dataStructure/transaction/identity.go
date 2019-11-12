@@ -16,32 +16,13 @@ import (
 type Identity struct {
 	privateKey *rsa.PrivateKey `json:"privateKey"`
 	PublicKey  *rsa.PublicKey  `json:"publicKey"`
-	//HashForKey 	hash.Hash
-	Label string `json:"label"`
 }
 
-type PublicIdentity struct {
-	PublicKey *rsa.PublicKey `json:"publicKey"`
-	//HashForKey 	hash.Hash 		`json="hashForKey"`
-	Label string `json:"label"`
-}
-
-func NewIdentity(label string) Identity {
+func NewIdentity() Identity {
 	id := Identity{}
 	id.privateKey, id.PublicKey = GeneratePubPrivKeyPair()
 	//id.HashForKey = GenerateHashForKey(label)
-	id.Label = label
-
 	return id
-}
-
-func (id *Identity) GetMyPublicIdentity() PublicIdentity {
-	pid := PublicIdentity{}
-	pid.PublicKey = id.PublicKey
-	//pid.HashForKey = id.HashForKey
-	pid.Label = id.Label
-
-	return pid
 }
 
 func (id *Identity) GetMyPrivateKey() *rsa.PrivateKey {
@@ -159,22 +140,11 @@ func GenDigest(hash hash.Hash, message []byte) []byte {
 //
 //}
 
-func (pid *PublicIdentity) PublicIdentityToJson() string {
-	jsonBytes, err := json.Marshal(&pid)
+func (pid *Identity) PublicIdentityToJson() string {
+	jsonBytes, err := json.Marshal(&pid.PublicKey)
 	if err != nil {
 		log.Println("Error in marshalling publicIdentity, err - ", err)
 		return "{}"
 	}
 	return string(jsonBytes)
-}
-
-func JsonToPublicIdentity(str string) PublicIdentity {
-	pid := PublicIdentity{}
-	if len(str) > 0 {
-		err := json.Unmarshal([]byte(str), &pid)
-		if err != nil {
-			log.Println("Error in Unmarshalling publicIdentity, err - ", err)
-		}
-	}
-	return pid
 }
