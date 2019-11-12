@@ -103,14 +103,17 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func Broadcast(message dataStructure.Message, uri string) {
-	if message.Verify() && message.HopCount > 0 {
+	//if message.Verify() && message.HopCount > 0 {
+	if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1
 		messageJson, err := json.Marshal(message)
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
-				_, err := http.Post(k + uri, "application/json", bytes.NewBuffer(messageJson))
-				if err != nil {
-					sameShardPeers.Delete(k)
+				if k != message.NodeId {
+					_, err := http.Post(k + uri, "application/json", bytes.NewBuffer(messageJson))
+					if err != nil {
+						sameShardPeers.Delete(k)
+					}
 				}
 			}
 		}
@@ -138,6 +141,7 @@ func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
+	transactionPool.DeleteTransactions(message.Block.Value)
 	sbc.Insert(message.Block)
 	go Broadcast(message, "/shard/block/")
 }
@@ -152,19 +156,23 @@ func GenShardBlock() {
 				latestBlock = latestBlocks[rand.Intn(len(latestBlocks))]
 			}
 			for latestBlocks == nil || latestBlock.Header.Height == sbc.GetLatestBlocks()[0].Header.Height {
-				parentHash := "Genesis"
+				parentHash := "genesis"
 				if latestBlocks != nil {
 					parentHash = latestBlock.Header.Hash
 				}
 				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.TRANSACTION)
+				transactionPool.DeleteTransactions(block.Value)
 				sbc.Insert(block)
 				message := dataStructure.Message{
 					Type:        dataStructure.BLOCK,
 					Transaction: transaction.Transaction{},
 					Block:       block,
 					HopCount:    1,
+					NodeId:      SELF_ADDR,
 				}
 				message.Sign(identity)
+				latestBlocks = sbc.GetLatestBlocks()
+				fmt.Println(latestBlock.Header.Height)
 				go Broadcast(message, "/shard/block/")
 			}
 		}

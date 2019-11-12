@@ -135,7 +135,7 @@ func (block *Block) EncodeToJSON() string {
 		Size:       block.Header.Size,
 		Nonce:      block.Header.Nonce,
 		Miner:      block.Header.Miner,
-		MPT:        block.Value.GetAllKeyValuePairs(),
+		MPT:        block.Value.Raw_db,
 		BlockType:  block.Header.BlockType,
 	}
 
@@ -170,3 +170,5 @@ func (block *Block) CreateBlockSig(fromCid t.Identity) []byte {
 func VerifyBlockSig(fromPid *rsa.PublicKey, block Block, signature string) bool {
 	return t.VerifySingature(fromPid, []byte(block.EncodeToJSON()), []byte(signature))
 }
+
+

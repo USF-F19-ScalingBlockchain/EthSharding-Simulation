@@ -54,7 +54,7 @@ var routes = Routes{
 	Route{
 		"GetTransactionsInPool",
 		"GET",
-		"/shard/{shardId}/transactionPool/", // Shard server
+		"/shard/transactionPool/", // Shard server
 		handlers.ShowAllTransactionsInPool,
 	},
 	Route{
@@ -91,7 +91,13 @@ var routes = Routes{
 		"PostBlockToShard",
 		"POST",
 		"/shard/block/",
-		handlers.AddShardBlock,
+		handlers.AddShardBlock, // Shard server
+	},
+	Route{
+		"ShowShard",
+		"GET",
+		"/shard/show/",
+		handlers.ShowShard, // Shard server
 	},
 	//Route{
 	//	"GetBeaconChain",

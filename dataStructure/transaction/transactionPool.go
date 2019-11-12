@@ -104,6 +104,16 @@ func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
 	return h.Sum32()%utils.TOTAL_SHARDS != txp.shardId
 }
 
+func (txp *TransactionPool) DeleteTransactions(mpt mpt.MerklePatriciaTrie) {
+	txp.mux.Lock()
+	defer txp.mux.Unlock()
+	for key, _ := range txp.pool {
+		if _, ok := mpt.Raw_db[key]; ok {
+			delete(txp.pool, key)
+		}
+	}
+}
+
 func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	txp.mux.Lock()
 	txp.mux.Unlock()
@@ -116,7 +126,6 @@ func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 		transJson, err := json.Marshal(txp.pool[i])
 		if err == nil {
 			txMpt.Insert(i, string(transJson))
-			delete(txp.pool, i)
 		}
 	}
 	return txMpt, true
