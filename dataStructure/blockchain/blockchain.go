@@ -151,7 +151,7 @@ func EncodeBlockchainToJSON(blockchain *Blockchain) string {
 		height := i
 		for _, v := range blockchain.Chain[height] {
 			thisBlock := v
-			jsonStringBlockchain += EncodeToJSON(&thisBlock) + ","
+			jsonStringBlockchain += thisBlock.EncodeToJSON() + ","
 		}
 	}
 	jsonStringBlockchain = jsonStringBlockchain[:len(jsonStringBlockchain)-1]

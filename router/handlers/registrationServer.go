@@ -47,7 +47,7 @@ func GetPeers(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
-	if shardId == utils.BEACON_ID {
+	if uint32(shardId) == utils.BEACON_ID {
 		beaconPeersJson, err := beaconPeers.PeerMapToJson()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

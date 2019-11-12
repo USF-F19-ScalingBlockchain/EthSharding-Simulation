@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
@@ -22,7 +23,7 @@ func InitShardHandler(host string, port int32, shardId uint32) {
 }
 
 func StartShardMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer(REGISTRATION_SERVER+"/register/")
+	RegisterToServer(REGISTRATION_SERVER +"/register/")
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -39,6 +40,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 					flag = true
 				}
 			}
+			go GenShardBlock()
 		}
 	}
 }
@@ -97,16 +99,16 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	transactionPool.AddToTransactionPool(message.Transaction)
-	go BroadcastTransaction(message)
+	go Broadcast(message, "/shard/transaction/")
 }
 
-func BroadcastTransaction(message dataStructure.Message) {
-	if message.HopCount > 0 {
+func Broadcast(message dataStructure.Message, uri string) {
+	if message.Verify() && message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1
 		messageJson, err := json.Marshal(message)
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
-				_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
+				_, err := http.Post(k + uri, "application/json", bytes.NewBuffer(messageJson))
 				if err != nil {
 					sameShardPeers.Delete(k)
 				}
@@ -120,7 +122,7 @@ func ShowAllTransactionsInPool(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(transactionPool.Show()))
 }
 
-func GetBlock(w http.ResponseWriter, r *http.Request) {
+func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -137,7 +139,7 @@ func GetBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	sbc.Insert(message.Block)
-	go BroadcastBlock(message)
+	go Broadcast(message, "/shard/block/")
 }
 
 func GenShardBlock() {
@@ -163,23 +165,23 @@ func GenShardBlock() {
 					HopCount:    1,
 				}
 				message.Sign(identity)
+				go Broadcast(message, "/shard/block/")
 			}
 		}
 	}
 }
 
-func BroadcastBlock(message dataStructure.Message) {
-	// ToDo: broadcast block to peers with same shard id.
-}
-
 func UploadBlockchain(w http.ResponseWriter, r *http.Request) {
 	blockChainJson, err := sbc.BlockChainToJson()
 	if err != nil {
-		//data.PrintError(err, "Upload")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(blockChainJson))
 	}
+}
+
+func ShowShard(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "%s\n%s", sameShardPeers.Show(), sbc.Show())
 }

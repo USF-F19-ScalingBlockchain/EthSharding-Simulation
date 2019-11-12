@@ -105,8 +105,8 @@ func VerifySingature(senderPubKey *rsa.PublicKey /*senderHashForKey hash.Hash,*/
 }
 
 //GetHashOfPubId
-func GetHashOfPublicKey(pid *PublicIdentity) string {
-	sum := sha3.Sum256(pid.PublicKey.N.Bytes())
+func GetHashOfPublicKey(pid *rsa.PublicKey) string {
+	sum := sha3.Sum256(pid.N.Bytes())
 	return hex.EncodeToString(sum[:])
 
 }

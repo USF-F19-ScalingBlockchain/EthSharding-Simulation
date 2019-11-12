@@ -91,7 +91,7 @@ var routes = Routes{
 		"PostBlockToShard",
 		"POST",
 		"/shard/block/",
-		handlers.GetBlock,
+		handlers.AddShardBlock,
 	},
 	//Route{
 	//	"GetBeaconChain",

@@ -1,10 +1,10 @@
 package blockchain
 
 import (
+	"crypto/rsa"
 	"sync"
 
 	"github.com/EthSharding-Simulation/dataStructure/mpt"
-	s "github.com/EthSharding-Simulation/dataStructure/transaction"
 )
 
 //SyncBlockChain struct is main - shared - common - datastu
@@ -92,7 +92,7 @@ func (sbc *SyncBlockChain) BlockChainToJson() (string, error) {
 
 // GenBlock finc takes in a mpt and returns a block for the node
 // takes parentat list[0] in random height
-func (sbc *SyncBlockChain) GenBlock(height int32, parentHash string, mpt mpt.MerklePatriciaTrie, nonce string, miner s.PublicIdentity, blockType BlockType) Block {
+func (sbc *SyncBlockChain) GenBlock(height int32, parentHash string, mpt mpt.MerklePatriciaTrie, nonce string, miner *rsa.PublicKey, blockType BlockType) Block {
 
 	var newBlock Block
 	newBlock.Initial(height, parentHash, mpt, nonce, miner, blockType)
