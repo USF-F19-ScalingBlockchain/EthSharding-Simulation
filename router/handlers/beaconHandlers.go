@@ -25,7 +25,7 @@ func InitBeaconHandler(host string, port int32, shardId uint32) {
 
 func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 	RegisterToServer(REGISTRATION_SERVER + "/register/") // register itself to registration server
-	//todo : get all peers for beacon
+	//get all peers for beacon
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID))) // get all peers for 9999
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -41,6 +41,15 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	bpc := beaconPeers.Copy()
+	if len(bpc) > 0 {
+		for peer, _ := range bpc {
+			fmt.Println("peer: ", peer)
+			DownloadBeaconChain(peer)
+		}
+	}
+	//go GenerateBeaconBlocks()  //todo : anurag from here
+
 	var sb strings.Builder
 	sb.WriteString("::: Started BeaconMiner :::\n")
 	sb.WriteString(getBeaconMinerPeers())
@@ -48,6 +57,16 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(sb.String()))
 
+}
+
+func DownloadBeaconChain(peer string) {
+	resp, err := http.Get(peer + "/beacon/upload/")
+	if err == nil {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			sbc.UpdateEntireBlockChain(string(respBody))
+		}
+	}
 }
 
 func GetPeerListForBeacon(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +116,7 @@ func ShowShardPool(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddToShardPool(w http.ResponseWriter, r *http.Request) {
+func RecvShard(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -114,26 +133,38 @@ func AddToShardPool(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	shardPool.AddToShardPool(message.Shard)
-	//go BroadcastShard(message) //todo : anurag styart here
+	go BroadcastShard(message)
 }
 
+func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
+	blockChainJson, err := sbc.BlockChainToJson()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(blockChainJson))
+	}
+}
+
+//////////////
 //helper funcs
 
-//func BroadcastShard(message dataStructure.Message) {
-//	if message.HopCount > 0 {
-//		message.HopCount = message.HopCount - 1
-//		messageJson, err := json.Marshal(message)
-//		if err == nil {
-//			//for k, _ := range shardPeersForBeacon.Copy() {
-//			for k, _ := range shardPeersForBeacon {
-//				_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
-//				if err != nil {
-//					sameShardPeers.Delete(k)
-//				}
-//			}
-//		}
-//	}
-//}
+func BroadcastShard(message dataStructure.Message) {
+	if message.HopCount > 0 {
+		message.HopCount = 0 //message.HopCount - 1 // broadcasting
+		messageJson, err := json.Marshal(message)
+		if err == nil {
+			for k, _ := range beaconPeers.Copy() {
+				//_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
+				_, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
+				if err != nil {
+					beaconPeers.Delete(k)
+				}
+			}
+		}
+	}
+}
 
 func sendTxPostReq(reqBody []byte, shardId uint32) bool {
 	client := http.Client{}
