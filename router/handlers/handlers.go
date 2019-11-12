@@ -18,13 +18,18 @@ var SHARD_ID = uint32(utils.BEACON_ID)
 var sameShardPeers = peerList.NewPeerList(SHARD_ID)
 var transactionPool = transaction.NewTransactionPool(SHARD_ID)
 var sbc blockchain.SyncBlockChain
+
 // end shard sever
 
 // start registration server
 var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID)) // also used by beacon miner
-var shardPeers = map[uint32]peerList.PeerList{}                 // also used by beacon miner
+var shardPeers = map[uint32]peerList.PeerList{}
 var identity transaction.Identity
+
 // end registration server
+
+//
+var shardPeersForBeacon = map[uint32]string{} //start beacon server
 
 func RegisterToServer(url string) {
 	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}

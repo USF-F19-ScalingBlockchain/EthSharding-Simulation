@@ -93,4 +93,22 @@ var routes = Routes{
 		"/shard/block/",
 		handlers.GetBlock,
 	},
+	//Route{
+	//	"GetBeaconChain",
+	//	"GET",
+	//	"/beacon/upload/",
+	//	handlers.UploadBeaconChain, // Beacon server todo
+	//},
+	//Route{
+	//	"GetShardPool",
+	//	"GET",
+	//	"/beacon/shardpool/",
+	//	handlers.ShowShardPool, // Shard server todo
+	//},
+	//Route{
+	//	"PostShardPool",
+	//	"POST",
+	//	"/beacon/shardpool/",
+	//	handlers.AddToShardPool, // Shard server todo
+	//},
 }

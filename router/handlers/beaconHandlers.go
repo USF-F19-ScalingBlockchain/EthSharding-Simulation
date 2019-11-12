@@ -48,38 +48,6 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func TxReceive(w http.ResponseWriter, r *http.Request) {
-	reqBody := readRequestBody(w, r)
-	tx := transaction.JsonToTransaction(string(reqBody))
-	shardId := transactionPool.GetShardId(tx.From)
-	//todo : create a message from submitted transaction
-	if sendTxPostReq(reqBody, shardId) { //send tx to shard miner
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-	}
-}
-
-func sendTxPostReq(reqBody []byte, shardId uint32) bool {
-	client := http.Client{}
-
-	//find a peer for the given shard
-	if peers, ok := shardPeers[shardId]; ok { //if found
-		peerAdd := peers.GetAPeer()
-		url := peerAdd + "/shard/" + strconv.Itoa(int(shardId)) + "/transaction" //shard/{shardId}/transaction/
-		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
-		if err != nil {
-			log.Print("Cannot create PostReq, err " + err.Error())
-		}
-		client.Do(req) // sending tx message to "one" shard miner
-		return true
-	} else {
-		//todo :get all peers for that shardId
-		// if good response
-		return false
-	}
-}
-
 func GetPeerListForBeacon(w http.ResponseWriter, r *http.Request) {
 	peersJson := getBeaconPeers()
 
@@ -106,6 +74,37 @@ func RegisterBeaconPeer(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func TxReceive(w http.ResponseWriter, r *http.Request) {
+	reqBody := readRequestBody(w, r)
+	tx := transaction.JsonToTransaction(string(reqBody))
+	shardId := transactionPool.GetShardId(tx.From)
+	//todo : create a message from submitted transaction
+	if sendTxPostReq(reqBody, shardId) { //send tx to shard miner
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func sendTxPostReq(reqBody []byte, shardId uint32) bool {
+	client := http.Client{}
+
+	//find a peer for the given shard
+	if peerAdd, ok := shardPeersForBeacon[shardId]; ok { //if found
+		url := peerAdd + "/shard/" + strconv.Itoa(int(shardId)) + "/transaction" //shard/{shardId}/transaction/
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+		if err != nil {
+			log.Print("Cannot create PostReq, err " + err.Error())
+		}
+		client.Do(req) // sending tx message to "one" shard miner
+		return true
+	} else { //if peer not found
+		//todo :get all peers for that shardId
+		// if good response
+		return false
+	}
+}
+
 func readRequestBody(w http.ResponseWriter, r *http.Request) []byte {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -120,11 +119,16 @@ func readRequestBody(w http.ResponseWriter, r *http.Request) []byte {
 func getBeaconPeers() string {
 	var sb strings.Builder
 	sb.WriteString("Beacon Peers : \n")
-	peerJson, err := beaconPeers.PeerMapToJson()
+	beaconPeerJson, err := beaconPeers.PeerMapToJson()
 	if err != nil {
 		sb.WriteString(err.Error())
 	} else {
-		sb.WriteString(peerJson)
+		sb.WriteString(beaconPeerJson)
+	}
+
+	sb.WriteString("\nShard Peers : \n")
+	for peer := range shardPeers {
+
 	}
 
 	return sb.String()
