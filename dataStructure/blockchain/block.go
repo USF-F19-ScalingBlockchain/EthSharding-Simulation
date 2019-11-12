@@ -20,7 +20,7 @@ type Head struct {
 	ParentHash string //`json:"parenthash"`
 	Size       int32  // `json:"parenthash"`
 	Nonce      string //'json:"nonce"'
-	Miner      t.PublicIdentity
+	Miner      *rsa.PublicKey
 	BlockType  BlockType
 }
 
@@ -56,13 +56,13 @@ type BlockJson struct {
 	ParentHash string            `json:"parentHash"`
 	Size       int32             `json:"size"`
 	Nonce      string            `json:"nonce"`
-	Miner      t.PublicIdentity  `json:"miner"`
+	Miner      *rsa.PublicKey	 `json:"miner"`
 	MPT        map[string]string `json:"mpt"`
 	BlockType BlockType			 `json:"blockType"`
 }
 
 // Initial function a Block initializes the block for height, parentHash and Value
-func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePatriciaTrie, nonce string, miner t.PublicIdentity, blockType BlockType) {
+func (block *Block) Initial(height int32, parentHash string, value mpt.MerklePatriciaTrie, nonce string, miner *rsa.PublicKey, blockType BlockType) {
 
 	block.Header.Timestamp = time.Now().Unix()
 	block.Header.Height = height
@@ -101,7 +101,7 @@ func DecodeFromJSON(jsonString string) Block {
 
 // DecodeToBlock func creates a type block from from all given parameters
 func DecodeToBlock(height int32, timestamp int64, hash string, parentHash string, size int32, nonce string,
-	miner t.PublicIdentity, keyValueMap map[string]string, blockType BlockType) Block {
+	miner *rsa.PublicKey, keyValueMap map[string]string, blockType BlockType) Block {
 
 	block := Block{}
 	block.Header.Height = height
@@ -152,12 +152,15 @@ func (block *Block) EncodeToJSON() string {
 //     b.Value.Root + string(b.Header.Size) + block.Header.Nonce
 func (block *Block) Hash() string {
 	var hashStr string
+	publicKeyString, err := json.Marshal(block.Header.Miner)
+	if err == nil {
+		hashStr = string(block.Header.Height) + string(block.Header.Timestamp) + string(block.Header.ParentHash) +
+			string(block.Value.Root) + string(block.Header.Size) + block.Header.Nonce + string(publicKeyString) + block.Header.BlockType.String()
 
-	hashStr = string(block.Header.Height) + string(block.Header.Timestamp) + string(block.Header.ParentHash) +
-		string(block.Value.Root) + string(block.Header.Size) + block.Header.Nonce + block.Header.Miner.PublicIdentityToJson() + block.Header.BlockType.String()
-
-	sum := sha3.Sum256([]byte(hashStr))
-	return "HashStart_" + hex.EncodeToString(sum[:]) + "_HashEnd"
+		sum := sha3.Sum256([]byte(hashStr))
+		return "HashStart_" + hex.EncodeToString(sum[:]) + "_HashEnd"
+	}
+	return ""
 }
 
 func (block *Block) CreateBlockSig(fromCid t.Identity) []byte {
