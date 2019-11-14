@@ -7,6 +7,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
+	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
@@ -228,7 +229,7 @@ func GenShardBlock() {
 				}
 				message.Sign(identity)
 				if sbc.GetLength() % 10 == 0 {
-					go SubmitToBeacon(message)
+					go SubmitToBeacon()
 				}
 				go Broadcast(message, "/shard/block/")
 			}
@@ -236,12 +237,20 @@ func GenShardBlock() {
 	}
 }
 
-func SubmitToBeacon(message dataStructure.Message) {
+func SubmitToBeacon() {
 	if len(beaconPeers.Copy()) == 0 {
 		UpdateBeaconPeer()
 	}
 	for {
 		for k, _ := range beaconPeers.Copy() {
+			message := dataStructure.Message{
+				Type:        dataStructure.SHARD,
+				Shard:       shard.Shard{},
+				HopCount:    1,
+				NodeId:      SELF_ADDR,
+				TimeStamp:   time.Time{},
+			}
+			message.Sign(identity)
 			messageJson, err := json.Marshal(message)
 			if err == nil {
 				resp, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
