@@ -119,6 +119,31 @@ func ShowShardPool(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
+	// todo : find t2
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	defer r.Body.Close()
+
+	message := dataStructure.Message{}
+	if message.Type != dataStructure.SHARD {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	err = json.Unmarshal(reqBody, &message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	//todo : find t3
+	//todo : put in data structure with key as transaction ID and value as t3-t2( delta Ts)
+	shardPool.AddToShardPool(message.Shard)
+	go BroadcastMessage(message, "/beacon/shard/", beaconPeers.Copy()) // BroadcastShardMessage
+}
+
+func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -135,12 +160,7 @@ func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
 	shardPool.AddToShardPool(message.Shard)
-	go BroadcastShard(message)
-}
-
-/// todo : here
-func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
-
+	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
@@ -162,16 +182,61 @@ func ShowBeaconChain(w http.ResponseWriter, r *http.Request) {
 //////////////
 //helper funcs
 
-func BroadcastShard(message dataStructure.Message) {
+//func BroadcastShardMessage(message dataStructure.Message, api string, peers map[string]bool) {
+//	if message.HopCount > 0 {
+//		message.HopCount = message.HopCount - 1 // broadcasting
+//		messageJson, err := json.Marshal(message)
+//		if err == nil {
+//			for k, _ := range peers {
+//				_, err := http.Post(k+api, "application/json", bytes.NewBuffer(messageJson))
+//				if err != nil {
+//					beaconPeers.Delete(k)
+//				}
+//			}
+//		}
+//	}
+//}
+
+//func BroadcastBeaconBlockMessage(message dataStructure.Message, api string, peers map[string]bool) {
+//	if message.HopCount > 0 {
+//		message.HopCount = message.HopCount - 1 // broadcasting
+//		messageJson, err := json.Marshal(message)
+//		if err == nil {
+//			for k, _ := range peers {
+//				//_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
+//				_, err := http.Post(k+api, "application/json", bytes.NewBuffer(messageJson))
+//				if err != nil {
+//					beaconPeers.Delete(k)
+//				}
+//			}
+//		}
+//	}
+//}
+
+func BroadcastMessage(message dataStructure.Message, api string, peers map[string]bool) {
 	if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1 // broadcasting
 		messageJson, err := json.Marshal(message)
 		if err == nil {
-			for k, _ := range beaconPeers.Copy() {
-				//_, err := http.Post(k+"/shard/transaction/", "application/json", bytes.NewBuffer(messageJson))
-				_, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
+			for k, _ := range peers {
+				_, err := http.Post(k+api, "application/json", bytes.NewBuffer(messageJson))
 				if err != nil {
 					beaconPeers.Delete(k)
+				}
+			}
+		}
+	}
+}
+
+func BroadcastMessageToShardsMiner(message dataStructure.Message, api string, peers map[uint32]string) {
+	if message.HopCount > 0 {
+		message.HopCount = message.HopCount - 1 // broadcasting
+		messageJson, err := json.Marshal(message)
+		if err == nil {
+			for _, v := range peers {
+				_, err := http.Post(v+api, "application/json", bytes.NewBuffer(messageJson))
+				if err != nil {
+					//todo : get new miner for the shard from register
 				}
 			}
 		}
@@ -277,16 +342,18 @@ func GenerateBeaconBlocks() {
 				transactionPool.DeleteTransactions(block.Value)
 				sbc.Insert(block)
 				message := dataStructure.Message{
-					Type:        dataStructure.BLOCK,
-					Transaction: transaction.Transaction{},
-					Block:       block,
-					HopCount:    1,
-					NodeId:      SELF_ADDR,
+					Type: dataStructure.BLOCK,
+					//Transaction: transaction.Transaction{},
+					Block:    block,
+					HopCount: 1,
+					NodeId:   SELF_ADDR,
 				}
 				message.Sign(identity)
 				latestBlocks = sbc.GetLatestBlocks()
 				fmt.Println(latestBlock.Header.Height)
-				go Broadcast(message, "/beacon/block/")
+				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
+				//broadcast to all miner of all shards
+				go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)
 			}
 		}
 	}
