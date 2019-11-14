@@ -49,6 +49,16 @@ func (sp *ShardPool) DeleteFromShardPool(shardId string) {
 	delete(sp.pool, shardId)
 }
 
+func (sp *ShardPool) DeleteShards(mpt mpt.MerklePatriciaTrie) {
+	sp.mux.Lock()
+	defer sp.mux.Unlock()
+	for key, _ := range sp.pool {
+		if _, ok := mpt.Raw_db[key]; ok {
+			delete(sp.pool, key)
+		}
+	}
+}
+
 func (sp *ShardPool) Show() string {
 	var byteBuf bytes.Buffer
 

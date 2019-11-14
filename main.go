@@ -25,6 +25,6 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+os.Args[1], router))
 
 	} else {
-		log.Fatal(http.ListenAndServe(":6689", router))
+		log.Fatal(http.ListenAndServe(":6689", router)) //registration server
 	}
 }

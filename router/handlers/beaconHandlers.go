@@ -8,6 +8,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
+	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"io/ioutil"
 	"log"
@@ -15,11 +16,13 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func InitBeaconHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
+	//identity = transaction.NewIdentity()
 
 	//beaconPeers
 	//shardPeers
@@ -102,7 +105,24 @@ func TxReceive(w http.ResponseWriter, r *http.Request) {
 	reqBody := readRequestBody(w, r)
 	tx := transaction.JsonToTransaction(string(reqBody))
 	shardId := transactionPool.GetShardId(tx.From)
-	if sendTxPostReq(reqBody, shardId) { //send tx to shard miner
+	//making message of tx
+	msg := dataStructure.Message{
+		Type:        dataStructure.TRANSACTION,
+		Transaction: tx,
+		Block:       blockchain.Block{},
+		Shard:       shard.Shard{},
+		HopCount:    1,
+		NodeId:      SELF_ADDR,
+		TimeStamp:   time.Now(),
+	}
+	msg.Sign(identity)
+	msgJson, err := json.Marshal(&msg)
+	if err != nil {
+		log.Println("cannot convert message to json")
+	}
+	// end of making message of tx
+
+	if sendTxPostReq(msgJson, shardId) { //send tx to shard miner
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
@@ -151,7 +171,7 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	message := dataStructure.Message{}
-	if message.Type != dataStructure.SHARD {
+	if message.Type != dataStructure.BLOCK {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	err = json.Unmarshal(reqBody, &message)
@@ -159,7 +179,9 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
-	shardPool.AddToShardPool(message.Shard)
+
+	shardPool.DeleteShards(message.Block.Value)
+	sbc.Insert(message.Block)
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 }
 
@@ -244,18 +266,20 @@ func BroadcastMessageToShardsMiner(message dataStructure.Message, api string, pe
 }
 
 func sendTxPostReq(reqBody []byte, shardId uint32) bool {
-	client := http.Client{}
+	//client := http.Client{}
 
 	sid := strconv.Itoa(int(shardId))
 
 	//find a peer for the given shard
 	if peerAdd, ok := shardPeersForBeacon[shardId]; ok { //if found
-		url := peerAdd + "/shard/" + sid + "/transaction" //shard/{shardId}/transaction/
-		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
-		if err != nil {
-			log.Print("Cannot create PostReq, err " + err.Error())
-		}
-		_, _ = client.Do(req) // sending tx message to "one" shard miner
+		//url := peerAdd + "/shard/transaction/" //shard/transaction/
+		//fmt.Println("Sending to shard : "+ url)
+		//req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+		//if err != nil {
+		//	log.Print("Cannot create PostReq, err " + err.Error())
+		//}
+		//_, _ = client.Do(req) // sending tx message to "one" shard miner
+		sendTxMessageToShard(peerAdd, reqBody)
 		return true
 	} else { //if peer not found
 		resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + sid + "/") // /register/peers/{shardId}/
@@ -269,20 +293,38 @@ func sendTxPostReq(reqBody []byte, shardId uint32) bool {
 		if len(peers) > 0 {
 			for k, _ := range peers {
 				shardPeersForBeacon[shardId] = k
-				url := k + "/shard/" + sid + "/transaction" //shard/{shardId}/transaction/
-				req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
-				if err != nil {
-					log.Print("Cannot create PostReq, err " + err.Error())
-				}
-				_, err = client.Do(req) // sending tx message to "one" shard miner
-				if err == nil {
-					return true
-				}
+				//url := k + "/shard/transaction/" //shard/transaction/
+				//fmt.Println("Sending to shard : "+ url)
+				//req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+				//if err != nil {
+				//	log.Print("Cannot create PostReq, err " + err.Error())
+				//}
+				//_, err = client.Do(req) // sending tx message to "one" shard miner
+				//if err == nil {
+				//	return true
+				//}
+				sendTxMessageToShard(k, reqBody)
 			}
 
 		}
 		return false
 	} // end of else (if peer not found)
+
+}
+
+func sendTxMessageToShard(peerAdd string, reqBody []byte) bool {
+	client := http.Client{}
+	url := peerAdd + "/shard/transaction/" //shard/transaction/
+	fmt.Println("Sending to shard : " + url)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		log.Print("Cannot create PostReq, err " + err.Error())
+	}
+	_, err = client.Do(req) // sending tx message to "one" shard miner
+	if err != nil {
+		return false
+	}
+	return true
 
 }
 
@@ -318,7 +360,8 @@ func getBeaconMinerPeers() string {
 
 	sb.WriteString("\nShard Peers : \n")
 	for shardId, shardPeer := range shardPeersForBeacon {
-		sb.WriteString("Shard Id: " + string(shardId) + ", Shard Peer: " + shardPeer + "\n")
+		sid := fmt.Sprint(shardId)
+		sb.WriteString("Shard Id: " + sid + ", Shard Peer: " + shardPeer + "\n")
 	}
 
 	return sb.String()
@@ -351,10 +394,13 @@ func GenerateBeaconBlocks() {
 				message.Sign(identity)
 				latestBlocks = sbc.GetLatestBlocks()
 				fmt.Println(latestBlock.Header.Height)
+				latestBlocks = sbc.GetLatestBlocks()                               //getting latest block
 				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 				//broadcast to all miner of all shards
 				go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)
 			}
 		}
+
+		time.Sleep(10 * time.Second)
 	}
 }

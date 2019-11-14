@@ -27,7 +27,7 @@ func InitShardHandler(host string, port int32, shardId uint32) {
 }
 
 func StartShardMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer(REGISTRATION_SERVER +"/register/")
+	RegisterToServer(REGISTRATION_SERVER + "/register/")
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -37,7 +37,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			flag := false
 			for server, _ := range newPeers.Copy() {
-				go RegisterToServer(server+"/shard/peers/")
+				go RegisterToServer(server + "/shard/peers/")
 				sameShardPeers.Add(server)
 				if !flag {
 					DownloadBlockchain(server)
@@ -115,7 +115,7 @@ func Broadcast(message dataStructure.Message, uri string) {
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
 				if k != message.NodeId {
-					_, err := http.Post(k + uri, "application/json", bytes.NewBuffer(messageJson))
+					_, err := http.Post(k+uri, "application/json", bytes.NewBuffer(messageJson))
 					if err != nil {
 						sameShardPeers.Delete(k)
 					}
@@ -225,12 +225,13 @@ func GenShardBlock() {
 					Block:       block,
 					HopCount:    1,
 					NodeId:      SELF_ADDR,
-					TimeStamp:	 time.Now(),
+					TimeStamp:   time.Now(),
 				}
 				message.Sign(identity)
-				if sbc.GetLength() % 10 == 0 {
+				if sbc.GetLength()%10 == 0 {
 					go SubmitToBeacon()
 				}
+				latestBlocks = sbc.GetLatestBlocks()
 				go Broadcast(message, "/shard/block/")
 			}
 		}
@@ -244,17 +245,17 @@ func SubmitToBeacon() {
 	for {
 		for k, _ := range beaconPeers.Copy() {
 			message := dataStructure.Message{
-				Type:        dataStructure.SHARD,
-				Shard:       shard.Shard{},
-				HopCount:    1,
-				NodeId:      SELF_ADDR,
-				TimeStamp:   time.Time{},
+				Type:      dataStructure.SHARD,
+				Shard:     shard.Shard{},
+				HopCount:  1,
+				NodeId:    SELF_ADDR,
+				TimeStamp: time.Time{},
 			}
 			message.Sign(identity)
 			messageJson, err := json.Marshal(message)
 			if err == nil {
 				resp, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
-				if err != nil || resp.StatusCode != http.StatusOK{
+				if err != nil || resp.StatusCode != http.StatusOK {
 					UpdateBeaconPeer()
 				} else {
 					break
