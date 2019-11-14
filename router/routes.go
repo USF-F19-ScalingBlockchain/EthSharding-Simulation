@@ -135,13 +135,30 @@ var routes = Routes{
 		"/beacon/show/",
 		handlers.ShowBeaconChain, // Beacon server
 	},
+	Route{
+		"GetBeaconBlock",
+		"GET",
+		"/shard/beacon/",
+		handlers.GetBeaconBlock, // Shard server
+	},
 	//Route{
-	//	"ShowBeaconChain",
+	//	"ShowOpenTransactionSet",
 	//	"GET",
-	//	"/shard/beacon/",
-	//	handlers.ShowBeaconChain, // Shard server
+	//	"/shard/openTransactionSet/",
+	//	handlers.ShowOpenTransactionSet,
 	//},
-
+	//Route{
+	//	"ShowReceivedTransactions",
+	//	"GET",
+	//	"/shard/recvTimes",
+	//	handlers.ShowReceivedTransactions,
+	//},
+	//Route{
+	//	"ShowFinalizeTransactions",
+	//	"GET",
+	//	"/shard/finalTimes",
+	//	handlers.ShowFinalizeTransactions,
+	//},
 	//Route{
 	//	"GetBeaconBlockAtHeight",
 	//	"GET",

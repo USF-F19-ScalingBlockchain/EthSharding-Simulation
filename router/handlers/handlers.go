@@ -28,6 +28,8 @@ var beaconPeers = peerList.NewPeerList(utils.BEACON_ID) // also used by beacon m
 var shardPeers = map[uint32]peerList.PeerList{}
 var identity = transaction.NewIdentity()
 var recvTime = map[string]time.Time{}
+var finalizeTime = map[string]time.Time{}
+var openTransactionSet transaction.OpenTransactionSet
 var blockPushIndex = 10 // Push block every 10th index
 // end registration server
 

@@ -34,12 +34,12 @@ func (s *Shard) Show() string {
 	return sb.String()
 }
 
-func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string) Shard {
+func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]transaction.Transaction) Shard {
 	shard := Shard{
 		ShardChainRoot:     ShardChainRoot,
 		Timestamp:          Timestamp,
 		ProposerNode:       ProposerNode,
-		OpenTransactionSet: make(map[string]transaction.Transaction),
+		OpenTransactionSet: OpenTransactionSet,
 	}
 	shard.Id = shard.genId()
 	return shard

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
+	"github.com/EthSharding-Simulation/dataStructure/mpt"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
@@ -24,6 +25,7 @@ func InitShardHandler(host string, port int32, shardId uint32) {
 	transactionPool = transaction.NewTransactionPool(SHARD_ID)
 	sameShardPeers = peerList.NewPeerList(SHARD_ID)
 	sbc = blockchain.NewBlockChain()
+	openTransactionSet = transaction.NewOpenTransactionSet()
 }
 
 func StartShardMiner(w http.ResponseWriter, r *http.Request) {
@@ -149,9 +151,11 @@ func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 	transactionPool.DeleteTransactions(message.Block.Value)
 	if !sbc.CheckParentHash(message.Block) && message.Block.Header.Height-1 > 0 {
 		if AskForBlock(message.Block.Header.Height-1, message.Block.Header.ParentHash) {
+			IsOpenTransaction(message.Block.Value, false)
 			sbc.Insert(message.Block)
 		}
 	} else {
+		IsOpenTransaction(message.Block.Value, false)
 		sbc.Insert(message.Block)
 	}
 	go Broadcast(message, "/shard/block/")
@@ -167,10 +171,12 @@ func AskForBlock(height int32, parentHash string) bool {
 				block := blockchain.DecodeFromJSON(string(body))
 				if !sbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
 					if AskForBlock(block.Header.Height-1, block.Header.ParentHash) {
+						IsOpenTransaction(block.Value, false)
 						sbc.Insert(block)
 						return true
 					}
 				} else {
+					IsOpenTransaction(block.Value, false)
 					sbc.Insert(block)
 					return true
 				}
@@ -218,6 +224,7 @@ func GenShardBlock() {
 				}
 				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.TRANSACTION)
 				transactionPool.DeleteTransactions(block.Value)
+				IsOpenTransaction(block.Value, false)
 				sbc.Insert(block)
 				message := dataStructure.Message{
 					Type:        dataStructure.BLOCK,
@@ -241,6 +248,19 @@ func GenShardBlock() {
 	}
 }
 
+func IsOpenTransaction(mpt mpt.MerklePatriciaTrie, ignoreFlag bool) {
+	for k, v := range mpt.Raw_db {
+		tx := transaction.JsonToTransaction(v)
+		if transactionPool.IsOpenTransaction(tx) {
+			if !ignoreFlag {
+				openTransactionSet.AddTransaction(tx)	
+			}
+		} else {
+			recvTime[k] = time.Now()
+		}
+	}
+}
+
 func SubmitToBeacon() {
 	if len(beaconPeers.Copy()) == 0 {
 		UpdateBeaconPeer()
@@ -249,17 +269,10 @@ func SubmitToBeacon() {
 	flag := true
 	for flag {
 		for k, _ := range beaconPeers.Copy() {
-			//message := dataStructure.Message{
-			//	Type:      dataStructure.SHARD,
-			//	Shard:     shard.Shard{},
-			//	HopCount:  1,
-			//	NodeId:    SELF_ADDR,
-			//	TimeStamp: time.Time{},
-			//}
-			fmt.Println("Beacon Peer: ", k)
+			shard := shard.NewShard("abc", time.Now(), SELF_ADDR, openTransactionSet.CopyAndClear())
 			message := dataStructure.Message{
 				Type:      dataStructure.SHARD,
-				Shard:     shard.NewShard("abc", time.Now(), SELF_ADDR),
+				Shard:     shard,
 				HopCount:  1,
 				NodeId:    SELF_ADDR,
 				TimeStamp: time.Time{},
@@ -276,8 +289,6 @@ func SubmitToBeacon() {
 					flag = false
 					break
 				}
-			} else {
-				fmt.Println("Never going to happen")
 			}
 		}
 	}
@@ -307,4 +318,24 @@ func UploadBlockchain(w http.ResponseWriter, r *http.Request) {
 
 func ShowShard(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n%s", sameShardPeers.Show(), sbc.Show())
+}
+
+func GetBeaconBlock(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	defer r.Body.Close()
+	message := dataStructure.Message{}
+	err = json.Unmarshal(reqBody, &message)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	if message.Type != dataStructure.BLOCK {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	IsOpenTransaction(message.Block.Value, true)
+	go Broadcast(message, "/shard/beacon/")
 }
