@@ -95,6 +95,12 @@ func (peers *PeerList) PeerMapToJson() (string, error) {
 	return string(s), err
 }
 
+func JsonToPeerMap(jsonStr []byte) map[string]bool {
+	pm := make(map[string]bool)
+	_ = json.Unmarshal(jsonStr, &pm)
+	return pm
+}
+
 /**
 Converts peerMapJson string to peerMap and add
 peers to peerMap.

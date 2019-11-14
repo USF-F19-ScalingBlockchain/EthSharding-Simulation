@@ -121,6 +121,18 @@ var routes = Routes{
 		"RecvShard",
 		"POST",
 		"/beacon/shard/",
-		handlers.RecvShard, // Beacon server
+		handlers.RecvShardStuff, // Beacon server // will recv from shard miner
+	},
+	Route{
+		"RecvBeaconBlock",
+		"POST",
+		"/beacon/block/",
+		handlers.RecvBeaconBlock, // Beacon server // will recv from beacon miner //todo
+	},
+	Route{
+		"ShowBeaconChain",
+		"GET",
+		"/beacon/show/",
+		handlers.ShowBeaconChain, // Beacon server
 	},
 }

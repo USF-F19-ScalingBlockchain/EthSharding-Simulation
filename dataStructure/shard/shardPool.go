@@ -2,6 +2,8 @@ package shard
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/EthSharding-Simulation/dataStructure/mpt"
 	"github.com/EthSharding-Simulation/utils"
 	"log"
 	"sync"
@@ -59,22 +61,22 @@ func (sp *ShardPool) Show() string {
 
 //
 //// ToDo: Should we delete shard from shard pool after building mpt?
-//func (shardPool *ShardPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
-//	shardPool.mux.Lock()
-//	shardPool.mux.Unlock()
-//	shardMpt := mpt.MerklePatriciaTrie{}
-//	shardMpt.Initial()
-//	if len(shardPool.Pool) < utils.MIN_TX_POOL_SIZE {
-//		return shardMpt, false
-//	}
-//	for i, _ := range shardPool.Pool {
-//		shardsJson, err := json.Marshal(shardPool.Pool[i])
-//		if err == nil {
-//			shardMpt.Insert(shardPool.Pool[i].Id, string(shardsJson))
-//		}
-//	}
-//	return shardMpt, true
-//}
+func (shardPool *ShardPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
+	shardPool.mux.Lock()
+	shardPool.mux.Unlock()
+	shardMpt := mpt.MerklePatriciaTrie{}
+	shardMpt.Initial()
+	if len(shardPool.pool) < utils.MIN_TX_POOL_SIZE {
+		return shardMpt, false
+	}
+	for i, _ := range shardPool.pool {
+		shardsJson, err := json.Marshal(shardPool.pool[i])
+		if err == nil {
+			shardMpt.Insert(shardPool.pool[i].Id, string(shardsJson))
+		}
+	}
+	return shardMpt, true
+}
 
 //old
 //
