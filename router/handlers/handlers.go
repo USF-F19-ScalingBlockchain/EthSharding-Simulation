@@ -9,6 +9,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
 	"net/http"
+	"time"
 )
 
 var REGISTRATION_SERVER = "http://localhost:6689"
@@ -26,7 +27,8 @@ var sbc blockchain.SyncBlockChain //for both shard and beacon chain
 var beaconPeers = peerList.NewPeerList(uint32(utils.BEACON_ID)) // also used by beacon miner
 var shardPeers = map[uint32]peerList.PeerList{}
 var identity = transaction.NewIdentity()
-
+var recvTime = map[string]time.Time{}
+var blockPushIndex = 10 // Push block every 10th index
 // end registration server
 
 // start Beacon server

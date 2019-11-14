@@ -135,4 +135,10 @@ var routes = Routes{
 		"/beacon/show/",
 		handlers.ShowBeaconChain, // Beacon server
 	},
+	//Route{
+	//	"ShowBeaconChain",
+	//	"GET",
+	//	"/shard/beacon/",
+	//	handlers.ShowBeaconChain, // Shard server
+	//},
 }

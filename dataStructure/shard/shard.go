@@ -12,11 +12,11 @@ import (
 )
 
 type Shard struct {
-	ShardChainRoot     string
-	Timestamp          time.Time
-	Id                 string
-	ProposerNode       string
-	OpenTransactionSet map[string]string
+	ShardChainRoot     string 								`json:"shardChainRoot"`
+	Timestamp          time.Time 							`json:"timestamp"`
+	Id                 string								`json:"id"`
+	ProposerNode       string								`json:"proposerNode"`
+	OpenTransactionSet map[string]transaction.Transaction	`json:openTransactionSet`
 }
 
 func (s *Shard) Show() string {
@@ -28,13 +28,13 @@ func (s *Shard) Show() string {
 		"\nshard Time :" + s.Timestamp.String() + "\n")
 	sb.WriteString("Open Transaction Set:\n")
 	for _, val := range s.OpenTransactionSet {
-		sb.WriteString(val)
+		sb.WriteString(string(val.TransactionToJsonByteArray()))
 	}
 
 	return sb.String()
 }
 
-func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]string) Shard {
+func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]transaction.Transaction) Shard {
 	shard := Shard{
 		ShardChainRoot:     ShardChainRoot,
 		Timestamp:          Timestamp,

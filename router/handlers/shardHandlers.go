@@ -8,11 +8,13 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func InitShardHandler(host string, port int32, shardId uint32) {
@@ -99,6 +101,7 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
 	}
+	recvTime[message.Transaction.Id] = time.Now()
 	transactionPool.AddToTransactionPool(message.Transaction)
 	go Broadcast(message, "/shard/transaction/")
 }
@@ -221,12 +224,45 @@ func GenShardBlock() {
 					Block:       block,
 					HopCount:    1,
 					NodeId:      SELF_ADDR,
+					TimeStamp:	 time.Now(),
 				}
 				message.Sign(identity)
-				latestBlocks = sbc.GetLatestBlocks()
-				fmt.Println(latestBlock.Header.Height)
+				if sbc.GetLength() % 10 == 0 {
+					go SubmitToBeacon(message)
+				}
 				go Broadcast(message, "/shard/block/")
 			}
+		}
+	}
+}
+
+func SubmitToBeacon(message dataStructure.Message) {
+	if len(beaconPeers.Copy()) == 0 {
+		UpdateBeaconPeer()
+	}
+	for {
+		for k, _ := range beaconPeers.Copy() {
+			messageJson, err := json.Marshal(message)
+			if err == nil {
+				resp, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
+				if err != nil || resp.StatusCode != http.StatusOK{
+					UpdateBeaconPeer()
+				} else {
+					break
+				}
+			}
+		}
+	}
+}
+
+func UpdateBeaconPeer() {
+	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(utils.BEACON_ID)))
+	if err == nil && resp.StatusCode != http.StatusBadRequest {
+		respBytes, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			respBody := string(respBytes)
+			beaconPeers := peerList.NewPeerList(utils.BEACON_ID)
+			beaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 		}
 	}
 }
