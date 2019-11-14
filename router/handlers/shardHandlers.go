@@ -94,13 +94,13 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	message := dataStructure.Message{}
-	if message.Type != dataStructure.TRANSACTION {
-		w.WriteHeader(http.StatusBadRequest)
-	}
 	err = json.Unmarshal(reqBody, &message)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	if message.Type != dataStructure.TRANSACTION {
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	recvTime[message.Transaction.Id] = time.Now()
 	transactionPool.AddToTransactionPool(message.Transaction)
@@ -138,13 +138,13 @@ func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	message := dataStructure.Message{}
-	if message.Type != dataStructure.BLOCK {
-		w.WriteHeader(http.StatusBadRequest)
-	}
 	err = json.Unmarshal(reqBody, &message)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
+	}
+	if message.Type != dataStructure.BLOCK {
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	transactionPool.DeleteTransactions(message.Block.Value)
 	if !sbc.CheckParentHash(message.Block) && message.Block.Header.Height-1 > 0 {
@@ -228,7 +228,8 @@ func GenShardBlock() {
 					TimeStamp:   time.Now(),
 				}
 				message.Sign(identity)
-				if sbc.GetLength()%10 == 0 {
+				if sbc.GetLength()%utils.SHARD_INTERVAL == 0 {
+					fmt.Println("Submitting to beacon")
 					go SubmitToBeacon()
 				}
 				latestBlocks = sbc.GetLatestBlocks()
@@ -243,12 +244,22 @@ func GenShardBlock() {
 func SubmitToBeacon() {
 	if len(beaconPeers.Copy()) == 0 {
 		UpdateBeaconPeer()
+		fmt.Println("len(beaconPeers.Copy()) ", len(beaconPeers.Copy()))
 	}
-	for {
+	flag := true
+	for flag {
 		for k, _ := range beaconPeers.Copy() {
+			//message := dataStructure.Message{
+			//	Type:      dataStructure.SHARD,
+			//	Shard:     shard.Shard{},
+			//	HopCount:  1,
+			//	NodeId:    SELF_ADDR,
+			//	TimeStamp: time.Time{},
+			//}
+			fmt.Println("Beacon Peer: ", k)
 			message := dataStructure.Message{
 				Type:      dataStructure.SHARD,
-				Shard:     shard.Shard{},
+				Shard:     shard.NewShard("abc", time.Now(), SELF_ADDR),
 				HopCount:  1,
 				NodeId:    SELF_ADDR,
 				TimeStamp: time.Time{},
@@ -258,10 +269,15 @@ func SubmitToBeacon() {
 			if err == nil {
 				resp, err := http.Post(k+"/beacon/shard/", "application/json", bytes.NewBuffer(messageJson))
 				if err != nil || resp.StatusCode != http.StatusOK {
+					fmt.Println("Error in ", k+"/beacon/shard/")
+					beaconPeers.Delete(k)
 					UpdateBeaconPeer()
 				} else {
+					flag = false
 					break
 				}
+			} else {
+				fmt.Println("Never going to happen")
 			}
 		}
 	}
@@ -273,7 +289,6 @@ func UpdateBeaconPeer() {
 		respBytes, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
 			respBody := string(respBytes)
-			beaconPeers := peerList.NewPeerList(utils.BEACON_ID)
 			beaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 		}
 	}

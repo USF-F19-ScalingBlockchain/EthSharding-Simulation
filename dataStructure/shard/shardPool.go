@@ -73,7 +73,7 @@ func (sp *ShardPool) Show() string {
 //// ToDo: Should we delete shard from shard pool after building mpt?
 func (shardPool *ShardPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	shardPool.mux.Lock()
-	shardPool.mux.Unlock()
+	defer shardPool.mux.Unlock()
 	shardMpt := mpt.MerklePatriciaTrie{}
 	shardMpt.Initial()
 	if len(shardPool.pool) < utils.MIN_TX_POOL_SIZE {
@@ -82,7 +82,7 @@ func (shardPool *ShardPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	for i, _ := range shardPool.pool {
 		shardsJson, err := json.Marshal(shardPool.pool[i])
 		if err == nil {
-			shardMpt.Insert(shardPool.pool[i].Id, string(shardsJson))
+			shardMpt.Insert(i, string(shardsJson))
 		}
 	}
 	return shardMpt, true

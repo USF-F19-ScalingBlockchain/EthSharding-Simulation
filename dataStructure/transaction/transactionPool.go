@@ -95,7 +95,7 @@ func (txp *TransactionPool) GetShardId(fromField string) uint32 {
 func (txp *TransactionPool) matchShard(transaction Transaction) bool {
 	h := fnv.New32a()
 	h.Write([]byte(transaction.From))
-	return h.Sum32() % utils.TOTAL_SHARDS == txp.shardId
+	return h.Sum32()%utils.TOTAL_SHARDS == txp.shardId
 }
 
 func (txp *TransactionPool) IsOpenTransaction(transaction Transaction) bool {
@@ -116,7 +116,7 @@ func (txp *TransactionPool) DeleteTransactions(mpt mpt.MerklePatriciaTrie) {
 
 func (txp *TransactionPool) BuildMpt() (mpt.MerklePatriciaTrie, bool) {
 	txp.mux.Lock()
-	txp.mux.Unlock()
+	defer txp.mux.Unlock()
 	txMpt := mpt.MerklePatriciaTrie{}
 	txMpt.Initial()
 	if len(txp.pool) < utils.MIN_TX_POOL_SIZE {
