@@ -401,6 +401,7 @@ func GenerateBeaconBlocks() {
 			}
 		}
 
-		time.Sleep(10 * time.Second)
+		random := rand.Intn(5) + 7
+		time.Sleep(time.Second * time.Duration(random))
 	}
 }

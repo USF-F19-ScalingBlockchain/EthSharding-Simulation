@@ -235,6 +235,8 @@ func GenShardBlock() {
 				go Broadcast(message, "/shard/block/")
 			}
 		}
+		random := rand.Intn(3) + 4
+		time.Sleep(time.Second * time.Duration(random))
 	}
 }
 
