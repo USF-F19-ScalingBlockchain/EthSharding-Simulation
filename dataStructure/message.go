@@ -5,6 +5,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"time"
 )
 
 type MessageType int
@@ -24,8 +25,23 @@ type Message struct {
 	HopCount    int32
 	Signature   string // signature of miner
 	PublicKey   *rsa.PublicKey
-	NodeId		string
+	NodeId      string
+	TimeStamp   time.Time
 }
+
+//func NewMessage() Message {
+//	return Message{
+//		Type:        0,
+//		Transaction: transaction.NewEmptyTx(),
+//		Block:       blockchain.Block{},
+//		Shard:       shard.Shard{},
+//		HopCount:    0,
+//		Signature:   "",
+//		PublicKey:   nil,
+//		NodeId:      "",
+//		TimeStamp:   time.Time{},
+//	}
+//}
 
 func (message *Message) Sign(identity transaction.Identity) {
 	if message.Type == TRANSACTION {
