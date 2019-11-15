@@ -187,7 +187,7 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		Block:       message.Block,
 		HopCount:    1,
 		NodeId:      SELF_ADDR,
-		TimeStamp:   time.Time{},
+		TimeStamp:   message.TimeStamp,
 	}
 	copyMessage.Sign(identity)
 	go BroadcastMessageToShardMiners(copyMessage, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
