@@ -23,7 +23,7 @@ func InitBeaconHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
 	//identity = transaction.NewIdentity()
-	sbc = blockchain.NewBlockChain()
+	beaconSbc = blockchain.NewBlockChain()
 	//beaconPeers
 	//shardPeers
 	//shardPool = beacon.NewShardPool()
@@ -70,7 +70,7 @@ func DownloadBeaconChain(peer string) {
 	if err == nil {
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			sbc.UpdateEntireBlockChain(string(respBody))
+			beaconSbc.UpdateEntireBlockChain(string(respBody))
 		}
 	}
 }
@@ -180,12 +180,12 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	shardPool.DeleteShards(message.Block.Value)
-	sbc.Insert(message.Block)
+	beaconSbc.Insert(message.Block)
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
-	blockChainJson, err := sbc.BlockChainToJson()
+	blockChainJson, err := beaconSbc.BlockChainToJson()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("HTTP 500: InternalServerError. " + err.Error()))
@@ -197,7 +197,7 @@ func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
 
 func ShowBeaconChain(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(sbc.Show()))
+	w.Write([]byte(beaconSbc.Show()))
 }
 
 //////////////
@@ -370,20 +370,20 @@ func GenerateBeaconBlocks() {
 	for {
 		mpt, flag := shardPool.BuildMpt()
 		if flag {
-			latestBlocks := sbc.GetLatestBlocks()
+			latestBlocks := beaconSbc.GetLatestBlocks()
 			var latestBlock blockchain.Block
 			if latestBlocks != nil && len(latestBlocks) != 0 {
 				latestBlock = latestBlocks[rand.Intn(len(latestBlocks))]
 			}
-			for latestBlocks == nil || latestBlock.Header.Height == sbc.GetLatestBlocks()[0].Header.Height {
+			for latestBlocks == nil || latestBlock.Header.Height == beaconSbc.GetLatestBlocks()[0].Header.Height {
 				parentHash := "genesis"
 				if latestBlocks != nil {
 					parentHash = latestBlock.Header.Hash
 				}
-				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.SHARD)
+				block := beaconSbc.GenBlock(beaconSbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.SHARD)
 				shardPool.DeleteShards(block.Value)
 				fmt.Println("Size of shard pool : " + shardPool.Show())
-				sbc.Insert(block)
+				beaconSbc.Insert(block)
 				message := dataStructure.Message{
 					Type: dataStructure.BLOCK,
 					//Transaction: transaction.Transaction{},
@@ -392,9 +392,9 @@ func GenerateBeaconBlocks() {
 					NodeId:   SELF_ADDR,
 				}
 				message.Sign(identity)
-				latestBlocks = sbc.GetLatestBlocks()
+				latestBlocks = beaconSbc.GetLatestBlocks()
 				fmt.Println(latestBlock.Header.Height)
-				latestBlocks = sbc.GetLatestBlocks()                               //getting latest block
+				latestBlocks = beaconSbc.GetLatestBlocks()                         //getting latest block
 				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 				//broadcast to all miner of all shards
 				go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)

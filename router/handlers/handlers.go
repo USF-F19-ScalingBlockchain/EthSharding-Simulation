@@ -19,7 +19,8 @@ var SELF_ADDR = "http://localhost:6689"
 var SHARD_ID = uint32(utils.BEACON_ID)
 var sameShardPeers = peerList.NewPeerList(SHARD_ID)
 var transactionPool = transaction.NewTransactionPool(SHARD_ID)
-var sbc blockchain.SyncBlockChain //for both shard and beacon chain
+var sbc blockchain.SyncBlockChain       //for both shard
+var beaconSbc blockchain.SyncBlockChain // and beacon chain
 
 // end shard sever
 
