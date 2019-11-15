@@ -120,6 +120,19 @@ func (peers *PeerList) InjectPeerMapJson(peerMapJsonStr string, selfAddr string)
 	}
 }
 
+func (peers *PeerList) InjectBeaconPeerMapJson(peerMapJsonStr string) {
+	peers.mux.Lock()
+	defer peers.mux.Unlock()
+	newPeerMap := map[string]bool{}
+	err := json.Unmarshal([]byte(peerMapJsonStr), &newPeerMap)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for k, v := range newPeerMap {
+		peers.peerMap[k] = v
+	}
+}
+
 //
 func (peers *PeerList) GetAPeer() string {
 	for peerAdd, _ := range peers.peerMap {

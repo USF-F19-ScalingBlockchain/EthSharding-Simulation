@@ -16,7 +16,7 @@ var REGISTRATION_SERVER = "http://localhost:6689"
 var SELF_ADDR = "http://localhost:6689"
 
 // start shard server
-var SHARD_ID = uint32(utils.BEACON_ID)
+var SHARD_ID = utils.BEACON_ID
 var sameShardPeers = peerList.NewPeerList(SHARD_ID)
 var transactionPool = transaction.NewTransactionPool(SHARD_ID)
 var sbc blockchain.SyncBlockChain       //for both shard
@@ -41,8 +41,8 @@ var shardPool = shard.NewShardPool()
 // end of variables for beacon server
 
 // functions
-func RegisterToServer(url string) {
-	registerInfo := RegisterInfo{SELF_ADDR, SHARD_ID}
+func RegisterToServer(url string, selfId uint32) {
+	registerInfo := RegisterInfo{SELF_ADDR, selfId}
 	registerInfoJson, err := json.Marshal(registerInfo)
 	if err == nil {
 		http.Post(url, "application/json", bytes.NewBuffer([]byte(registerInfoJson)))

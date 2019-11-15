@@ -22,14 +22,14 @@ import (
 func InitShardHandler(host string, port int32, shardId uint32) {
 	SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
+}
+
+func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 	transactionPool = transaction.NewTransactionPool(SHARD_ID)
 	sameShardPeers = peerList.NewPeerList(SHARD_ID)
 	sbc = blockchain.NewBlockChain()
 	openTransactionSet = transaction.NewOpenTransactionSet()
-}
-
-func StartShardMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer(REGISTRATION_SERVER + "/register/")
+	RegisterToServer(REGISTRATION_SERVER + "/register/", SHARD_ID)
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -39,7 +39,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			flag := false
 			for server, _ := range newPeers.Copy() {
-				go RegisterToServer(server + "/shard/peers/")
+				go RegisterToServer(server + "/shard/peers/", SHARD_ID)
 				sameShardPeers.Add(server)
 				if !flag {
 					DownloadBlockchain(server)
@@ -300,7 +300,7 @@ func UpdateBeaconPeer() {
 		respBytes, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
 			respBody := string(respBytes)
-			beaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
+			beaconPeers.InjectBeaconPeerMapJson(respBody)
 		}
 	}
 }

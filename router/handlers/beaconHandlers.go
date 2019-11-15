@@ -10,6 +10,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -20,28 +21,28 @@ import (
 )
 
 func InitBeaconHandler(host string, port int32, shardId uint32) {
-	SHARD_ID = shardId
+	//SHARD_ID = shardId
 	SELF_ADDR = host + ":" + strconv.Itoa(int(port))
 	//identity = transaction.NewIdentity()
-	beaconSbc = blockchain.NewBlockChain()
 	//beaconPeers
 	//shardPeers
 	//shardPool = beacon.NewShardPool()
 }
 
 func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
-	RegisterToServer(REGISTRATION_SERVER + "/register/") // register itself to registration server
+	beaconSbc = blockchain.NewBlockChain()
+	RegisterToServer(REGISTRATION_SERVER + "/register/", utils.BEACON_ID) // register itself to registration server
 	//get all peers for beacon
-	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID))) // get all peers for 9999
+	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(utils.BEACON_ID))) // get all peers for 9999
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
 			respBody := string(respBytes)
-			newBeaconPeers := peerList.NewPeerList(SHARD_ID)
+			newBeaconPeers := peerList.NewPeerList(utils.BEACON_ID)
 			newBeaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			for peer, _ := range newBeaconPeers.Copy() {
 				fmt.Println("peer: ", peer)
-				go RegisterToServer(peer + "/beacon/peers/") // announce it self to all its peers
+				go RegisterToServer(peer + "/beacon/peers/", utils.BEACON_ID) // announce it self to all its peers
 				beaconPeers.Add(peer)
 			}
 		}
