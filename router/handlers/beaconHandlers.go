@@ -182,14 +182,8 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	shardPool.DeleteShards(message.Block.Value)
 	beaconSbc.Insert(message.Block)
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy())                // BroadcastBeaconBlockMessage
-	copyMessage := dataStructure.Message{
-		Type:        message.Type,
-		Block:       message.Block,
-		HopCount:    1,
-		NodeId:      SELF_ADDR,
-		TimeStamp:   message.TimeStamp,
-	}
-	copyMessage.Sign(identity)
+	message.HopCount = 1
+	message.Sign(identity)
 	go BroadcastMessageToShardMiners(copyMessage, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
 }
 
