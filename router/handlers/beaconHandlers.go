@@ -405,15 +405,15 @@ func AskForBeaconBlock(height int32, parentHash string) bool {
 			body, err1 := ioutil.ReadAll(resp.Body)
 			if err1 == nil {
 				block := blockchain.DecodeFromJSON(string(body))
-				if !sbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
+				if !beaconSbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
 					if AskForBlock(block.Header.Height-1, block.Header.ParentHash) {
 						IsOpenTransaction(block.Value, false)
-						sbc.Insert(block)
+						beaconSbc.Insert(block)
 						return true
 					}
 				} else {
 					IsOpenTransaction(block.Value, false)
-					sbc.Insert(block)
+					beaconSbc.Insert(block)
 					return true
 				}
 			}
