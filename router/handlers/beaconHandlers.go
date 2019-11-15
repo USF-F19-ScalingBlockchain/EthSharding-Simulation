@@ -11,6 +11,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -31,7 +32,7 @@ func InitBeaconHandler(host string, port int32, shardId uint32) {
 
 func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 	beaconSbc = blockchain.NewBlockChain()
-	RegisterToServer(REGISTRATION_SERVER + "/register/", utils.BEACON_ID) // register itself to registration server
+	RegisterToServer(REGISTRATION_SERVER+"/register/", utils.BEACON_ID) // register itself to registration server
 	//get all peers for beacon
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(utils.BEACON_ID))) // get all peers for 9999
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
@@ -42,7 +43,7 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 			newBeaconPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			for peer, _ := range newBeaconPeers.Copy() {
 				fmt.Println("peer: ", peer)
-				go RegisterToServer(peer + "/beacon/peers/", utils.BEACON_ID) // announce it self to all its peers
+				go RegisterToServer(peer+"/beacon/peers/", utils.BEACON_ID) // announce it self to all its peers
 				beaconPeers.Add(peer)
 			}
 		}
@@ -181,8 +182,18 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	shardPool.DeleteShards(message.Block.Value)
-	beaconSbc.Insert(message.Block)
-	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy())                // BroadcastBeaconBlockMessage
+	//todo : check for parent hash
+	if !beaconSbc.CheckParentHash(message.Block) && message.Block.Header.Height-1 > 0 {
+		if AskForBeaconBlock(message.Block.Header.Height-1, message.Block.Header.ParentHash) {
+			beaconSbc.Insert(message.Block)
+		}
+	} else {
+		beaconSbc.Insert(message.Block)
+	}
+
+	//todo : end
+
+	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 	message.HopCount = 1
 	message.Sign(identity)
 	go BroadcastMessageToShardMiners(message, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
@@ -197,6 +208,19 @@ func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(blockChainJson))
 	}
+}
+
+func UploadBeaconBlock(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	height, _ := strconv.Atoi(vars["height"])
+	hash := vars["hash"]
+
+	blk, found := beaconSbc.GetBlock(int32(height), hash)
+	if !found {
+		w.WriteHeader(http.StatusNoContent)
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(blk.EncodeToJSON()))
 }
 
 func ShowBeaconChain(w http.ResponseWriter, r *http.Request) {
@@ -371,6 +395,31 @@ func getBeaconMinerPeers() string {
 	}
 
 	return sb.String()
+}
+
+func AskForBeaconBlock(height int32, parentHash string) bool {
+	peerList := beaconPeers.Copy()
+	for i, _ := range peerList {
+		resp, err := http.Get(i + "/beacon/block/" + strconv.Itoa(int(height)) + "/" + parentHash)
+		if err == nil && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusInternalServerError {
+			body, err1 := ioutil.ReadAll(resp.Body)
+			if err1 == nil {
+				block := blockchain.DecodeFromJSON(string(body))
+				if !sbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
+					if AskForBlock(block.Header.Height-1, block.Header.ParentHash) {
+						IsOpenTransaction(block.Value, false)
+						sbc.Insert(block)
+						return true
+					}
+				} else {
+					IsOpenTransaction(block.Value, false)
+					sbc.Insert(block)
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func GenerateBeaconBlocks() {

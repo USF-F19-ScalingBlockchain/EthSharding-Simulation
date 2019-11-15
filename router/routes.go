@@ -159,10 +159,10 @@ var routes = Routes{
 	//	"/shard/finalTimes",
 	//	handlers.ShowFinalizeTransactions,
 	//},
-	//Route{
-	//	"GetBeaconBlockAtHeight",
-	//	"GET",
-	//	"/beacon/block/{height}/{hash}",
-	//	handlers.UploadBeaconBlock,
-	//}
+	Route{
+		"GetBeaconBlockAtHeight",
+		"GET",
+		"/beacon/block/{height}/{hash}",
+		handlers.UploadBeaconBlock,
+	},
 }
