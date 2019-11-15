@@ -181,7 +181,8 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	shardPool.DeleteShards(message.Block.Value)
 	beaconSbc.Insert(message.Block)
-	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
+	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy())                // BroadcastBeaconBlockMessage
+	go BroadcastMessageToShardMiners(message, "/shard/beacon", sameShardPeers.Copy()) //acting as shard miner
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
@@ -249,17 +250,20 @@ func BroadcastMessage(message dataStructure.Message, api string, peers map[strin
 	}
 }
 
-func BroadcastMessageToShardsMiner(message dataStructure.Message, api string, peers map[uint32]string) {
+func BroadcastMessageToShardMiners(message dataStructure.Message, api string, peers map[string]bool) {
 	if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1 // broadcasting
 		messageJson, err := json.Marshal(message)
 		if err == nil {
-			for _, v := range peers {
-				_, err := http.Post(v+api, "application/json", bytes.NewBuffer(messageJson))
-				if err != nil {
-					//todo : get new miner for the shard from register
+			if len(peers) > 0 {
+				for k, _ := range peers {
+					_, err := http.Post(k+api, "application/json", bytes.NewBuffer(messageJson))
+					if err != nil {
+						//todo : get new miners for the shard from register or something else
+					}
 				}
 			}
+
 		}
 	}
 }
@@ -397,7 +401,8 @@ func GenerateBeaconBlocks() {
 				latestBlocks = beaconSbc.GetLatestBlocks()                         //getting latest block
 				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 				//broadcast to all miner of all shards
-				go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)
+				//go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)
+				go BroadcastMessageToShardMiners(message, "/shard/beacon", sameShardPeers.Copy())
 			}
 		}
 
