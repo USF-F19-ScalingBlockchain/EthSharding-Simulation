@@ -337,5 +337,4 @@ func GetBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	IsOpenTransaction(message.Block.Value, true)
-	go Broadcast(message, "/shard/beacon/")
 }

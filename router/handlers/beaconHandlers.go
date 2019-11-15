@@ -182,7 +182,15 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	shardPool.DeleteShards(message.Block.Value)
 	beaconSbc.Insert(message.Block)
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy())                // BroadcastBeaconBlockMessage
-	go BroadcastMessageToShardMiners(message, "/shard/beacon", sameShardPeers.Copy()) //acting as shard miner
+	copyMessage := dataStructure.Message{
+		Type:        message.Type,
+		Block:       message.Block,
+		HopCount:    1,
+		NodeId:      SELF_ADDR,
+		TimeStamp:   time.Time{},
+	}
+	copyMessage.Sign(identity)
+	go BroadcastMessageToShardMiners(copyMessage, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
@@ -402,7 +410,7 @@ func GenerateBeaconBlocks() {
 				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 				//broadcast to all miner of all shards
 				//go BroadcastMessageToShardsMiner(message, "/shard/beacon", shardPeersForBeacon)
-				go BroadcastMessageToShardMiners(message, "/shard/beacon", sameShardPeers.Copy())
+				go BroadcastMessageToShardMiners(message, "/shard/beacon/", sameShardPeers.Copy())
 			}
 		}
 
