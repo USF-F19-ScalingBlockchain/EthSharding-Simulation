@@ -184,7 +184,7 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy())                // BroadcastBeaconBlockMessage
 	message.HopCount = 1
 	message.Sign(identity)
-	go BroadcastMessageToShardMiners(copyMessage, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
+	go BroadcastMessageToShardMiners(message, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
