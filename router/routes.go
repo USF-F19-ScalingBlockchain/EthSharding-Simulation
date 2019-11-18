@@ -147,18 +147,24 @@ var routes = Routes{
 	//	"/shard/openTransactionSet/",
 	//	handlers.ShowOpenTransactionSet,
 	//},
-	//Route{
-	//	"ShowReceivedTransactions",
-	//	"GET",
-	//	"/shard/recvTimes",
-	//	handlers.ShowReceivedTransactions,
-	//},
-	//Route{
-	//	"ShowFinalizeTransactions",
-	//	"GET",
-	//	"/shard/finalTimes",
-	//	handlers.ShowFinalizeTransactions,
-	//},
+	Route{
+		"GetFinalTimePerTransaction",
+		"GET",
+		"/shard/finalityTime",
+		handlers.GetFinalTimePerTransaction,
+	},
+	Route{
+		"ShowReceivedTimes",
+		"GET",
+		"/shard/recvTimes",
+		handlers.ShowReceivedTimes,
+	},
+	Route{
+		"ShowFinalizeTimes",
+		"GET",
+		"/shard/finalTimes",
+		handlers.ShowFinalizeTimes,
+	},
 	Route{
 		"GetBeaconBlockAtHeight",
 		"GET",

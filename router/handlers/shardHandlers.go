@@ -259,7 +259,7 @@ func IsOpenTransaction(mpt mpt.MerklePatriciaTrie, ignoreFlag bool) {
 			}
 		} else {
 			finalizeLock.Lock()
-			finalizeTime[k] = time.Now()
+			finalizeTime[k] = time.Now() // ToDo: Replace time.now with tx.Timestamp
 			finalizeLock.Unlock()
 		}
 	}
@@ -341,4 +341,45 @@ func GetBeaconBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	IsOpenTransaction(message.Block.Value, true)
+}
+
+func ShowReceivedTimes(w http.ResponseWriter, r *http.Request) {
+	recvLock.Lock()
+	defer recvLock.Unlock()
+	recvTimeJson, err := json.Marshal(recvTime)
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		w.Write(recvTimeJson)
+	}
+}
+
+func ShowFinalizeTimes(w http.ResponseWriter, r *http.Request) {
+	finalizeLock.Lock()
+	defer finalizeLock.Unlock()
+	finalizeTimeJson, err := json.Marshal(finalizeTime)
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		w.Write(finalizeTimeJson)
+	}
+}
+
+func GetFinalTimePerTransaction(w http.ResponseWriter, r *http.Request) {
+	finalizeLock.Lock()
+	recvLock.Lock()
+	timeDiff := make(map[string]string)
+	for k, f := range finalizeTime {
+		if r, ok := recvTime[k]; ok {
+			timeDiff[k] = f.Sub(r).String()
+		}
+	}
+	timeDiffJson, err := json.Marshal(timeDiff)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(timeDiffJson)
+	defer func() {
+		recvLock.Unlock()
+		finalizeLock.Unlock()
+	}()
 }
