@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
@@ -40,6 +41,9 @@ var blockPushIndex = 10 // Push block every 10th index
 // start Beacon server
 var shardPeersForBeacon = map[uint32]string{} // each shard one peer for beacon server
 var shardPool = shard.NewShardPool()
+
+var tkShardRecv = dataStructure.NewTimeMap()
+var tkShardInChain = dataStructure.NewTimeMap()
 
 // end of variables for beacon server
 
