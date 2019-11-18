@@ -9,6 +9,7 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -28,7 +29,9 @@ var beaconSbc blockchain.SyncBlockChain // and beacon chain
 var beaconPeers = peerList.NewPeerList(utils.BEACON_ID) // also used by beacon miner
 var shardPeers = map[uint32]peerList.PeerList{}
 var identity = transaction.NewIdentity()
+var recvLock = sync.Mutex{}
 var recvTime = map[string]time.Time{}
+var finalizeLock = sync.Mutex{}
 var finalizeTime = map[string]time.Time{}
 var openTransactionSet transaction.OpenTransactionSet
 var blockPushIndex = 10 // Push block every 10th index

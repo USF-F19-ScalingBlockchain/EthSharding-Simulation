@@ -104,7 +104,9 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 	if message.Type != dataStructure.TRANSACTION {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+	recvLock.Lock()
 	recvTime[message.Transaction.Id] = time.Now()
+	recvLock.Unlock()
 	transactionPool.AddToTransactionPool(message.Transaction)
 	go Broadcast(message, "/shard/transaction/")
 }
@@ -256,7 +258,9 @@ func IsOpenTransaction(mpt mpt.MerklePatriciaTrie, ignoreFlag bool) {
 				openTransactionSet.AddTransaction(tx)	
 			}
 		} else {
-			recvTime[k] = time.Now()
+			finalizeLock.Lock()
+			finalizeTime[k] = time.Now()
+			finalizeLock.Unlock()
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package utils
 
-var TOTAL_SHARDS uint32 = 1
+var TOTAL_SHARDS uint32 = 0
 
 /* Transaction pool thresholds */
 var MIN_TX_POOL_SIZE = 1         // Minimum 50 Tx for given shard

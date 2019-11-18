@@ -8,7 +8,6 @@ import (
 	"github.com/EthSharding-Simulation/dataStructure"
 	"github.com/EthSharding-Simulation/dataStructure/blockchain"
 	"github.com/EthSharding-Simulation/dataStructure/peerList"
-	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"github.com/EthSharding-Simulation/utils"
 	"github.com/gorilla/mux"
@@ -111,8 +110,6 @@ func TxReceive(w http.ResponseWriter, r *http.Request) {
 	msg := dataStructure.Message{
 		Type:        dataStructure.TRANSACTION,
 		Transaction: tx,
-		Block:       blockchain.Block{},
-		Shard:       shard.Shard{},
 		HopCount:    1,
 		NodeId:      SELF_ADDR,
 		TimeStamp:   time.Now(),
