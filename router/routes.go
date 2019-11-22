@@ -189,4 +189,12 @@ var routes = Routes{
 		"/beacon/showt3t2",
 		handlers.Showt3t2, //beacon server
 	},
+	Route{
+		"ToFile",
+		"GET",
+		"/{filename}/{mode}/{dsname}",
+		handlers.ToFile, //all server
+	},
+
+
 }

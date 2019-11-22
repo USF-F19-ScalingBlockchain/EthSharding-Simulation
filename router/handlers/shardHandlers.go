@@ -274,11 +274,12 @@ func SubmitToBeacon() {
 		txDuration := make(map[string]time.Duration)
 		curTime := time.Now()
 		openTxSet := openTransactionSet.CopyAndClear()
+
 		for k, transaction := range openTxSet {
 			txDuration[k] = curTime.Sub(transaction.Timestamp)
 		}
 		for k, _ := range beaconPeers.Copy() {
-			shard := shard.NewShard(sbc.GetRoot(), time.Now(), SELF_ADDR, openTransactionSet.CopyAndClear(), txDuration)
+			shard := shard.NewShard(sbc.GetRoot(), time.Now(), SELF_ADDR, openTxSet, txDuration)
 			message := dataStructure.Message{
 				Type:      dataStructure.SHARD,
 				Shard:     shard,
@@ -376,18 +377,19 @@ func ShowFinalizeTimes(w http.ResponseWriter, r *http.Request) {
 func GetFinalTimePerTransaction(w http.ResponseWriter, r *http.Request) {
 	finalizeLock.Lock()
 	recvLock.Lock()
-	timeDiff := make(map[string]string)
+	//timeDiff := make(map[string]string)
 	for k, f := range finalizeTime {
 		if r, ok := recvTime[k]; ok {
-			timeDiff[k] = f.Sub(r).String()
+			//timeDiff[k] = f.Sub(r).String()
+			dkt1t0.AddToKeeper(k,f.Sub(r))
 		}
 	}
-	timeDiffJson, err := json.Marshal(timeDiff)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	//timeDiffJson, err := json.Marshal(timeDiff)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//}
 	w.WriteHeader(http.StatusOK)
-	w.Write(timeDiffJson)
+	w.Write([]byte(dkt1t0.ToString("s")))
 	defer func() {
 		recvLock.Unlock()
 		finalizeLock.Unlock()

@@ -20,7 +20,7 @@ type Input struct {
 var beaconMiner = "http://localhost:8000"
 
 func main() {
-	data, err := ioutil.ReadFile("input/transactions.json")
+	data, err := ioutil.ReadFile("input/fairwin/raw/transactions.json")
 	if err == nil {
 		input := Input{}
 		err = json.Unmarshal(data, &input)

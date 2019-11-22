@@ -1,6 +1,7 @@
 package dataStructure
 
 import (
+	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
 	"strings"
@@ -42,21 +43,30 @@ func (tm *TimeMap) AddToKeeper(txId string, time time.Time) {
 	}
 }
 
-func (tm *TimeMap) AddTxIdsFromShardToKeeper(openTxSet map[string]transaction.Transaction, time time.Time) {
+func (tm *TimeMap) AddTxIdsFromShardToKeeper(openTxSet map[string]transaction.Transaction, time time.Time, txProcessingTime map[string]time.Duration) {
 	tm.mux.Lock()
 	defer tm.mux.Unlock()
 	for txId, _ := range openTxSet {
 		if _, ok := tm.keeper[txId]; !ok {
-			tm.keeper[txId] = time
+			fmt.Println("tm.keeper[txId] = time.Add(-txProcessingTime[txId]) : " + txId+ " : "+ txProcessingTime[txId].String())
+			tm.keeper[txId] = time.Add(-txProcessingTime[txId])
 		}
 
 	}
 }
 
 func (tm *TimeMap) AddTxIdsFromBeaconBlockToKeeper(shardMap map[string]string, time time.Time) {
+	tm.mux.Lock()
+	defer tm.mux.Unlock()
 	for _, shardStr := range shardMap {
 		shard := shard.JsonToShard(shardStr)
-		tm.AddTxIdsFromShardToKeeper(shard.OpenTransactionSet, time)
+		//tm.AddTxIdsFromShardToKeeper(shard.OpenTransactionSet, time)
+		for txId, _ := range shard.OpenTransactionSet {
+			if _, ok := tm.keeper[txId]; !ok {
+				tm.keeper[txId] = time
+			}
+
+		}
 	}
 }
 
@@ -68,9 +78,9 @@ func (tm *TimeMap) GetLength() int {
 
 func (tm *TimeMap) ToString() string {
 	sb := strings.Builder{}
-	sb.WriteString("Showing time: \n")
+	sb.WriteString("tx, time "+ "\n")
 	for k, v := range tm.Copy() {
-		sb.WriteString(k + " : " + v.String() + "\n")
+		sb.WriteString(k + " , " + v.String() + "\n")
 	}
 	return sb.String()
 }
@@ -117,11 +127,11 @@ func (dm *DurationMap) GetLength() int {
 	return len(dm.keeper)
 }
 
-func (dm *DurationMap) ToString() string {
+func (dm *DurationMap) ToString(suffix string) string {
 	sb := strings.Builder{}
-	sb.WriteString("Showing duration: \n")
+	sb.WriteString("tx, duration \n")
 	for k, v := range dm.Copy() {
-		sb.WriteString(k + " : " + v.String() + "\n")
+		sb.WriteString(k + " , " + fmt.Sprintf("%f", v.Seconds()) + " , " + suffix + "\n")
 	}
 	return sb.String()
 }

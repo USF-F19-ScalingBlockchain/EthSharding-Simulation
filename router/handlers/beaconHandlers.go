@@ -156,12 +156,17 @@ func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
 	if message.Type != dataStructure.SHARD {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-
+	fmt.Println("yaha aa rahe hai!")
 	shardPool.AddToShardPool(message.Shard)
+	for _, j := range message.Shard.OpenTransactionSet {
+		fmt.Println("Open Tx Set: " + j.Show())
+	}
 	//put t2 in tkShardRecv
-	tkShardRecv.AddTxIdsFromShardToKeeper(message.Shard.OpenTransactionSet, shardRecvTime) //t2
+	tkShardRecv.AddTxIdsFromShardToKeeper(message.Shard.OpenTransactionSet, shardRecvTime, message.Shard.TxProcessingTime) //t2
 
 	go BroadcastMessage(message, "/beacon/shard/", beaconPeers.Copy()) // BroadcastShardMessage
+
+
 }
 
 func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
@@ -254,7 +259,7 @@ func Showt3t2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(dkt3t2.ToString()))
+	w.Write([]byte(dkt3t2.ToString("b")))
 }
 
 //////////////
