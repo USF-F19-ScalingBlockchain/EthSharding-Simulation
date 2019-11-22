@@ -112,12 +112,13 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func Broadcast(message dataStructure.Message, uri string) {
-	//if message.Verify() && message.HopCount > 0 {
-	if message.HopCount > 0 {
+	if message.Verify() && message.HopCount > 0 {
+	//if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1
 		messageJson, err := json.Marshal(message)
 		if err == nil {
 			for k, _ := range sameShardPeers.Copy() {
+				fmt.Println("Should not come here!")
 				if k != message.NodeId {
 					_, err := http.Post(k+uri, "application/json", bytes.NewBuffer(messageJson))
 					if err != nil {
@@ -153,11 +154,11 @@ func AddShardBlock(w http.ResponseWriter, r *http.Request) {
 	transactionPool.DeleteTransactions(message.Block.Value)
 	if !sbc.CheckParentHash(message.Block) && message.Block.Header.Height-1 > 0 {
 		if AskForBlock(message.Block.Header.Height-1, message.Block.Header.ParentHash) {
-			IsOpenTransaction(message.Block.Value, false)
+			IsOpenTransaction(message.Block.Value)
 			sbc.Insert(message.Block)
 		}
 	} else {
-		IsOpenTransaction(message.Block.Value, false)
+		IsOpenTransaction(message.Block.Value)
 		sbc.Insert(message.Block)
 	}
 	go Broadcast(message, "/shard/block/")
@@ -173,12 +174,12 @@ func AskForBlock(height int32, parentHash string) bool {
 				block := blockchain.DecodeFromJSON(string(body))
 				if !sbc.CheckParentHash(block) && block.Header.Height-1 > 0 {
 					if AskForBlock(block.Header.Height-1, block.Header.ParentHash) {
-						IsOpenTransaction(block.Value, false)
+						IsOpenTransaction(block.Value)
 						sbc.Insert(block)
 						return true
 					}
 				} else {
-					IsOpenTransaction(block.Value, false)
+					IsOpenTransaction(block.Value)
 					sbc.Insert(block)
 					return true
 				}
@@ -226,7 +227,7 @@ func GenShardBlock() {
 				}
 				block := sbc.GenBlock(sbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.TRANSACTION)
 				transactionPool.DeleteTransactions(block.Value)
-				IsOpenTransaction(block.Value, false)
+				IsOpenTransaction(block.Value)
 				sbc.Insert(block)
 				message := dataStructure.Message{
 					Type:        dataStructure.BLOCK,
@@ -250,13 +251,11 @@ func GenShardBlock() {
 	}
 }
 
-func IsOpenTransaction(mpt mpt.MerklePatriciaTrie, ignoreFlag bool) {
+func IsOpenTransaction(mpt mpt.MerklePatriciaTrie) {
 	for k, v := range mpt.Raw_db {
 		tx := transaction.JsonToTransaction(v)
-		if transactionPool.IsOpenTransaction(tx) {
-			if !ignoreFlag {
-				openTransactionSet.AddTransaction(tx)	
-			}
+		if transactionPool.GetShardId(tx.To) != SHARD_ID{
+			openTransactionSet.AddTransaction(tx)
 		} else {
 			finalizeLock.Lock()
 			finalizeTime[k] = time.Now() // ToDo: Replace time.now with tx.Timestamp
@@ -272,8 +271,14 @@ func SubmitToBeacon() {
 	}
 	flag := true
 	for flag {
+		txDuration := make(map[string]time.Duration)
+		curTime := time.Now()
+		openTxSet := openTransactionSet.CopyAndClear()
+		for k, transaction := range openTxSet {
+			txDuration[k] = curTime.Sub(transaction.Timestamp)
+		}
 		for k, _ := range beaconPeers.Copy() {
-			shard := shard.NewShard("abc", time.Now(), SELF_ADDR, openTransactionSet.CopyAndClear())
+			shard := shard.NewShard(sbc.GetRoot(), time.Now(), SELF_ADDR, openTransactionSet.CopyAndClear(), txDuration)
 			message := dataStructure.Message{
 				Type:      dataStructure.SHARD,
 				Shard:     shard,
@@ -340,7 +345,12 @@ func GetBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	if message.Type != dataStructure.BLOCK {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	IsOpenTransaction(message.Block.Value, true)
+	// No need to check as beacon miner will handle this calculation.
+	//for _, v := range message.Block.Value.Raw_db {
+	//	shard := shard.JsonToShard(v)
+	//
+	//}
+	//IsOpenTransaction(message.Block.Value, true)
 }
 
 func ShowReceivedTimes(w http.ResponseWriter, r *http.Request) {

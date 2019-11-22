@@ -50,6 +50,13 @@ func (sbc *SyncBlockChain) GetBlock(height int32, hash string) (Block, bool) {
 	return Block{}, false
 }
 
+func (sbc *SyncBlockChain) GetRoot() string {
+	sbc.mux.Lock()
+	defer sbc.mux.Unlock()
+	root, _ := sbc.bc.GetRoot()
+	return root
+}
+
 //Insert func inserts a block into blockchain in safe way
 func (sbc *SyncBlockChain) Insert(block Block) {
 	sbc.mux.Lock()

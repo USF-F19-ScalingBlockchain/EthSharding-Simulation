@@ -18,15 +18,27 @@ type Transaction struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func NewTransaction(from string, to string, tokens float64) Transaction {
+//func NewTransaction(from string, to string, tokens float64) Transaction {
+//	tx := Transaction{
+//		From:      from,
+//		To:        to,
+//		Tokens:    tokens,
+//		Timestamp: time.Now(),
+//	}
+//
+//	tx.Id = tx.genId()
+//
+//	return tx
+//}
+
+func NewTransaction(id string, from string, to string, tokens float64) Transaction {
 	tx := Transaction{
+		Id:		   id,
 		From:      from,
 		To:        to,
 		Tokens:    tokens,
 		Timestamp: time.Now(),
 	}
-
-	tx.Id = tx.genId()
 
 	return tx
 }

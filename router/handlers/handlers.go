@@ -35,7 +35,6 @@ var recvTime = map[string]time.Time{}
 var finalizeLock = sync.Mutex{}
 var finalizeTime = map[string]time.Time{}
 var openTransactionSet transaction.OpenTransactionSet
-var blockPushIndex = 10 // Push block every 10th index
 // end registration server
 
 // start Beacon server
