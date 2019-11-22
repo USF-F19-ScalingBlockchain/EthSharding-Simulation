@@ -38,10 +38,10 @@ func convertToTransaction(input Input) {
 		return val1 < val2
 	})
 	for _, val := range input.Result {
-		if len(val.To) != 0 || len(val.From) != 0 {
+		if len(val.To) != 0 && len(val.From) != 0 {
 			value, err := strconv.ParseFloat(val.Value, 64)
 			if err == nil {
-				tx := transaction.NewTransaction(val.From, val.To, value)
+				tx := transaction.NewTransaction(val.Hash, val.From, val.To, value)
 				txJson, err := json.Marshal(tx)
 				fmt.Println(string(txJson))
 				if err == nil {

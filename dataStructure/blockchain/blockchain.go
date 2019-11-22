@@ -198,6 +198,12 @@ func (blockchain *Blockchain) GetParentBlock(blk Block) Block {
 }
 
 func (blockchain *Blockchain) Show() string {
+	rs, chain := blockchain.GetRoot()
+	rs = fmt.Sprintf("This is the BlockChain: %s\n", rs) + chain
+	return rs
+}
+
+func (blockchain *Blockchain) GetRoot() (string, string) {
 	rs := ""
 	var idList []int
 	for id := range blockchain.Chain {
@@ -217,8 +223,7 @@ func (blockchain *Blockchain) Show() string {
 		rs += "\n"
 	}
 	sum := sha3.Sum256([]byte(rs))
-	rs = fmt.Sprintf("This is the BlockChain: %s\n", hex.EncodeToString(sum[:])) + rs
-	return rs
+	return hex.EncodeToString(sum[:]), rs
 }
 
 func (blockchain *Blockchain) ShowCanonical() string {

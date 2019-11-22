@@ -17,6 +17,7 @@ type Shard struct {
 	Id                 string                             `json:"id"`
 	ProposerNode       string                             `json:"proposerNode"`
 	OpenTransactionSet map[string]transaction.Transaction `json:openTransactionSet`
+	TxProcessingTime   map[string]time.Duration			  `json:txProcessingTime`
 }
 
 func (s *Shard) Show() string {
@@ -34,12 +35,13 @@ func (s *Shard) Show() string {
 	return sb.String()
 }
 
-func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]transaction.Transaction) Shard {
+func NewShard(ShardChainRoot string, Timestamp time.Time, ProposerNode string, OpenTransactionSet map[string]transaction.Transaction, TxProcessingTime map[string]time.Duration) Shard {
 	shard := Shard{
 		ShardChainRoot:     ShardChainRoot,
 		Timestamp:          Timestamp,
 		ProposerNode:       ProposerNode,
 		OpenTransactionSet: OpenTransactionSet,
+		TxProcessingTime:	TxProcessingTime,
 	}
 	shard.Id = shard.genId()
 	return shard
