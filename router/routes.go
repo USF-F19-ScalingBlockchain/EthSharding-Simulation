@@ -169,6 +169,24 @@ var routes = Routes{
 		"GetBeaconBlockAtHeight",
 		"GET",
 		"/beacon/block/{height}/{hash}",
-		handlers.UploadBeaconBlock,
+		handlers.UploadBeaconBlock, //beacon server
+	},
+	Route{
+		"Showt2",
+		"GET",
+		"/beacon/showt2",
+		handlers.Showt2, //beacon server
+	},
+	Route{
+		"Showt3",
+		"GET",
+		"/beacon/showt3",
+		handlers.Showt3, //beacon server
+	},
+	Route{
+		"Showt3t2",
+		"GET",
+		"/beacon/showt3t2",
+		handlers.Showt3t2, //beacon server
 	},
 }

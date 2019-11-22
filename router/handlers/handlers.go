@@ -42,8 +42,9 @@ var blockPushIndex = 10 // Push block every 10th index
 var shardPeersForBeacon = map[uint32]string{} // each shard one peer for beacon server
 var shardPool = shard.NewShardPool()
 
-var tkShardRecv = dataStructure.NewTimeMap()
-var tkShardInChain = dataStructure.NewTimeMap()
+var tkShardRecv = dataStructure.NewTimeMap()     //t2
+var tkShardsInBlock = dataStructure.NewTimeMap() //t3
+var dkt3t2 = dataStructure.NewDurationMap()      //t3-t2
 
 // end of variables for beacon server
 

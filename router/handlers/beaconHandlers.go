@@ -55,7 +55,7 @@ func StartBeaconMiner(w http.ResponseWriter, r *http.Request) {
 			DownloadBeaconChain(peer)
 		}
 	}
-	go GenerateBeaconBlocks() //todo : anurag from here : GenerateBeaconBlocks
+	go GenerateBeaconBlocks() //GenerateBeaconBlocks
 
 	var sb strings.Builder
 	sb.WriteString("::: Started BeaconMiner :::\n")
@@ -138,7 +138,7 @@ func ShowShardPool(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
-	recvTime := time.Now()
+	shardRecvTime := time.Now() //t2
 	fmt.Println("Recved shard from shard miner")
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -157,15 +157,16 @@ func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	//todo : put in data structure with key as transaction ID and value as t3-t2( delta Ts)
 	shardPool.AddToShardPool(message.Shard)
 	//put t2 in tkShardRecv
-	tkShardRecv.AddToKeeper(message.Shard.Id, recvTime)                //t2
+	tkShardRecv.AddTxIdsFromShardToKeeper(message.Shard.OpenTransactionSet, shardRecvTime) //t2
+
 	go BroadcastMessage(message, "/beacon/shard/", beaconPeers.Copy()) // BroadcastShardMessage
 }
 
 func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
-	//shardInChainTime := time.Now() //t3
+	shardInBlockTime := time.Now() //t3
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -190,13 +191,14 @@ func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
 	} else {
 		beaconSbc.Insert(message.Block)
 	}
-	//todo : add t3 to tkShardInChain
-	//tkShardInChain.AddToKeeper(message.Block.Value.)
 
 	go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 	message.HopCount = 1
 	message.Sign(identity)
 	go BroadcastMessageToShardMiners(message, "/shard/beacon/", sameShardPeers.Copy()) //acting as shard miner
+
+	//add t3 to tkShardsInBlock
+	tkShardsInBlock.AddTxIdsFromBeaconBlockToKeeper(message.Block.Value.Raw_db, shardInBlockTime) //t3
 }
 
 func UploadBeaconChain(w http.ResponseWriter, r *http.Request) {
@@ -226,6 +228,33 @@ func UploadBeaconBlock(w http.ResponseWriter, r *http.Request) {
 func ShowBeaconChain(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(beaconSbc.Show()))
+}
+
+func Showt2(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(tkShardRecv.ToString()))
+}
+
+func Showt3(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(tkShardsInBlock.ToString()))
+}
+
+func Showt3t2(w http.ResponseWriter, r *http.Request) {
+
+	//duration
+
+	if tkShardsInBlock.GetLength() != dkt3t2.GetLength() {
+		t2Copy := tkShardRecv.Copy()
+		t3Copy := tkShardsInBlock.Copy()
+		for t3k, t3v := range t3Copy {
+			t2v := t2Copy[t3k]
+			dkt3t2.AddToKeeper(t3k, t3v.Sub(t2v))
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(dkt3t2.ToString()))
 }
 
 //////////////
@@ -389,6 +418,9 @@ func GenerateBeaconBlocks() {
 					parentHash = latestBlock.Header.Hash
 				}
 				block := beaconSbc.GenBlock(beaconSbc.GetLength()+1, parentHash, mpt, "0", identity.PublicKey, blockchain.SHARD)
+
+				shardInBlockTime := time.Now() //t3
+
 				shardPool.DeleteShards(block.Value)
 				fmt.Println("Size of shard pool : " + shardPool.Show())
 				beaconSbc.Insert(block)
@@ -406,6 +438,9 @@ func GenerateBeaconBlocks() {
 				go BroadcastMessage(message, "/beacon/block/", beaconPeers.Copy()) // BroadcastBeaconBlockMessage
 				//broadcast to all miner of all shards
 				go BroadcastMessageToShardMiners(message, "/shard/beacon/", sameShardPeers.Copy())
+
+				//add t3 to tkShardsInBlock
+				tkShardsInBlock.AddTxIdsFromBeaconBlockToKeeper(message.Block.Value.Raw_db, shardInBlockTime) //t3
 			}
 		}
 
