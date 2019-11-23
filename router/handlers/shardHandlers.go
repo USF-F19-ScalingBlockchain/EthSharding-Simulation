@@ -29,7 +29,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 	sameShardPeers = peerList.NewPeerList(SHARD_ID)
 	sbc = blockchain.NewBlockChain()
 	openTransactionSet = transaction.NewOpenTransactionSet()
-	RegisterToServer(REGISTRATION_SERVER + "/register/", SHARD_ID)
+	RegisterToServer(REGISTRATION_SERVER+"/register/", SHARD_ID)
 	resp, err := http.Get(REGISTRATION_SERVER + "/register/peers/" + strconv.Itoa(int(SHARD_ID)))
 	if err == nil && resp.StatusCode != http.StatusBadRequest {
 		respBytes, err := ioutil.ReadAll(resp.Body)
@@ -39,7 +39,7 @@ func StartShardMiner(w http.ResponseWriter, r *http.Request) {
 			newPeers.InjectPeerMapJson(respBody, SELF_ADDR)
 			flag := false
 			for server, _ := range newPeers.Copy() {
-				go RegisterToServer(server + "/shard/peers/", SHARD_ID)
+				go RegisterToServer(server+"/shard/peers/", SHARD_ID)
 				sameShardPeers.Add(server)
 				if !flag {
 					DownloadBlockchain(server)
@@ -113,7 +113,7 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 
 func Broadcast(message dataStructure.Message, uri string) {
 	if message.Verify() && message.HopCount > 0 {
-	//if message.HopCount > 0 {
+		//if message.HopCount > 0 {
 		message.HopCount = message.HopCount - 1
 		messageJson, err := json.Marshal(message)
 		if err == nil {
@@ -246,7 +246,7 @@ func GenShardBlock() {
 				go Broadcast(message, "/shard/block/")
 			}
 		}
-		random := rand.Intn(3) + 4
+		random := 5 //rand.Intn(3) + 4
 		time.Sleep(time.Second * time.Duration(random))
 	}
 }
@@ -254,7 +254,7 @@ func GenShardBlock() {
 func IsOpenTransaction(mpt mpt.MerklePatriciaTrie) {
 	for k, v := range mpt.Raw_db {
 		tx := transaction.JsonToTransaction(v)
-		if transactionPool.GetShardId(tx.To) != SHARD_ID{
+		if transactionPool.GetShardId(tx.To) != SHARD_ID {
 			openTransactionSet.AddTransaction(tx)
 		} else {
 			finalizeLock.Lock()
@@ -381,7 +381,7 @@ func GetFinalTimePerTransaction(w http.ResponseWriter, r *http.Request) {
 	for k, f := range finalizeTime {
 		if r, ok := recvTime[k]; ok {
 			//timeDiff[k] = f.Sub(r).String()
-			dkt1t0.AddToKeeper(k,f.Sub(r))
+			dkt1t0.AddToKeeper(k, f.Sub(r))
 		}
 	}
 	//timeDiffJson, err := json.Marshal(timeDiff)

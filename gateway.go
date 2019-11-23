@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -12,15 +13,15 @@ import (
 )
 
 type Input struct {
-	Status string `json:"status"`
-	Message string `json:"message"`
-	Result []transaction.EthTx `json:"result"`
+	Status  string              `json:"status"`
+	Message string              `json:"message"`
+	Result  []transaction.EthTx `json:"result"`
 }
 
 var beaconMiner = "http://localhost:8000"
 
 func main() {
-	data, err := ioutil.ReadFile("input/fairwin/raw/transactions.json")
+	data, err := ioutil.ReadFile("input/" + utils.Dataset + "/raw/transactions.json")
 	if err == nil {
 		input := Input{}
 		err = json.Unmarshal(data, &input)
@@ -45,7 +46,7 @@ func convertToTransaction(input Input) {
 				txJson, err := json.Marshal(tx)
 				fmt.Println(string(txJson))
 				if err == nil {
-					http.Post(beaconMiner + "/beacon/Tx/receive/", "application/json", bytes.NewBuffer(txJson))
+					http.Post(beaconMiner+"/beacon/Tx/receive/", "application/json", bytes.NewBuffer(txJson))
 				}
 			}
 		}

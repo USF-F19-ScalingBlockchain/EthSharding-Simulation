@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure/shard"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
+	"github.com/EthSharding-Simulation/utils"
 	"strings"
 	"sync"
 	"time"
@@ -48,7 +49,7 @@ func (tm *TimeMap) AddTxIdsFromShardToKeeper(openTxSet map[string]transaction.Tr
 	defer tm.mux.Unlock()
 	for txId, _ := range openTxSet {
 		if _, ok := tm.keeper[txId]; !ok {
-			fmt.Println("tm.keeper[txId] = time.Add(-txProcessingTime[txId]) : " + txId+ " : "+ txProcessingTime[txId].String())
+			fmt.Println("tm.keeper[txId] = time.Add(-txProcessingTime[txId]) : " + txId + " : " + txProcessingTime[txId].String())
 			tm.keeper[txId] = time.Add(-txProcessingTime[txId])
 		}
 
@@ -78,7 +79,7 @@ func (tm *TimeMap) GetLength() int {
 
 func (tm *TimeMap) ToString() string {
 	sb := strings.Builder{}
-	sb.WriteString("tx, time "+ "\n")
+	sb.WriteString("tx, time " + "\n")
 	for k, v := range tm.Copy() {
 		sb.WriteString(k + " , " + v.String() + "\n")
 	}
@@ -127,11 +128,39 @@ func (dm *DurationMap) GetLength() int {
 	return len(dm.keeper)
 }
 
+//func (dm *DurationMap) ToString(suffix string) string {
+//	sb := strings.Builder{}
+//	sb.WriteString("tx, duration \n")
+//	for k, v := range dm.Copy() {
+//		sb.WriteString(k + " , " + fmt.Sprintf("%f", v.Seconds()) + " , " + suffix + "\n")
+//	}
+//	return sb.String()
+//}
+
 func (dm *DurationMap) ToString(suffix string) string {
 	sb := strings.Builder{}
-	sb.WriteString("tx, duration \n")
+	sb.WriteString("tx, duration, dataset, noOfShards, crossOrSame, " +
+		"submissionRate, ShardProductionType, BeaconProductionType, ShardProductionRate, BeaconProductionRate \n")
+
+	//dataset := "crosslink"
+	//noOfShards := "4"
+	crossOrSame := suffix
+	//submissionRate := "1"
+	//blockProductionType := "constant"
+
 	for k, v := range dm.Copy() {
-		sb.WriteString(k + " , " + fmt.Sprintf("%f", v.Seconds()) + " , " + suffix + "\n")
+		sb.WriteString(
+			k + " , " +
+				fmt.Sprintf("%f", v.Seconds()) + " , " +
+				utils.Dataset + " , " +
+				fmt.Sprintf("%d", utils.TOTAL_SHARDS) + " , " +
+				crossOrSame + " , " +
+				utils.SubmissionRate + ", " +
+				utils.ShardProductionType + " , " +
+				utils.BeaconProductionType + " , " +
+				utils.ShardProductionRate + " , " +
+				utils.BeaconProductionRate + " , " +
+				"\n")
 	}
 	return sb.String()
 }

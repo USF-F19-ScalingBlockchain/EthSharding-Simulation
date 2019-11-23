@@ -166,7 +166,6 @@ func RecvShardStuff(w http.ResponseWriter, r *http.Request) {
 
 	go BroadcastMessage(message, "/beacon/shard/", beaconPeers.Copy()) // BroadcastShardMessage
 
-
 }
 
 func RecvBeaconBlock(w http.ResponseWriter, r *http.Request) {
@@ -409,7 +408,7 @@ func AskForBeaconBlock(height int32, parentHash string) bool {
 }
 
 func GenerateBeaconBlocks() {
-	for {
+	for SHARD_ID == utils.BEACON_ID {
 		mpt, flag := shardPool.BuildMpt()
 		if flag {
 			latestBlocks := beaconSbc.GetLatestBlocks()
@@ -449,7 +448,7 @@ func GenerateBeaconBlocks() {
 			}
 		}
 
-		random := rand.Intn(5) + 7
+		random := 10 //rand.Intn(5) + 7
 		time.Sleep(time.Second * time.Duration(random))
 	}
 }
