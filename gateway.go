@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/EthSharding-Simulation/dataStructure/transaction"
-	"github.com/EthSharding-Simulation/utils"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 )
@@ -19,17 +19,36 @@ type Input struct {
 }
 
 var beaconMiner = "http://localhost:8000"
+var dataset = [7]string{ "0x", "chainlink", "cryptokitties", "dice2win", "fairwin", "makerdao", "tether"}
 
 func main() {
-	data, err := ioutil.ReadFile("input/" + utils.Dataset + "/raw/transactions.json")
-	if err == nil {
+	if os.Args[1] == "-r" {
 		input := Input{}
+		for _, v := range dataset {
+			newInput := doData(v)
+			for _, v := range newInput.Result {
+				input.Result = append(input.Result, v)
+			}
+		}
+		convertToTransaction(input)
+	} else {
+		input := doData(os.Args[1])
+		convertToTransaction(input)
+	}
+
+}
+
+func doData(dataset string) Input {
+	data, err := ioutil.ReadFile("input/"+ dataset +"/raw/transactions.json")
+	fmt.Println("input/"+ dataset +"/raw/transactions.json")
+	input := Input{}
+	if err == nil {
 		err = json.Unmarshal(data, &input)
 		if err != nil {
 			fmt.Println("Parsing Error, ", err)
 		}
-		convertToTransaction(input)
 	}
+	return input
 }
 
 func convertToTransaction(input Input) {

@@ -1,6 +1,6 @@
 package utils
 
-var TOTAL_SHARDS uint32 = 2
+var TOTAL_SHARDS uint32 = 8
 
 /* Transaction pool thresholds */
 var MIN_TX_POOL_SIZE = 1         // Minimum 50 Tx for given shard
@@ -13,9 +13,6 @@ var SHARD_INTERVAL int32 = 1                // Push to beacon every nth block
 
 /* Beacon Id */
 var BEACON_ID uint32 = 9999
-
-/*data construction*/
-var Dataset = "cryptokitties"
 
 //var NoOfShards = "4"
 //var crossOrSame = suffix

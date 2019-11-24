@@ -447,7 +447,6 @@ func GenerateBeaconBlocks() {
 				tkShardsInBlock.AddTxIdsFromBeaconBlockToKeeper(message.Block.Value.Raw_db, shardInBlockTime) //t3
 			}
 		}
-
 		random := 10 //rand.Intn(5) + 7
 		time.Sleep(time.Second * time.Duration(random))
 	}
