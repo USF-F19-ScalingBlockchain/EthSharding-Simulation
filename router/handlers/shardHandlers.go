@@ -246,6 +246,7 @@ func GenShardBlock() {
 				go Broadcast(message, "/shard/block/")
 			}
 		}
+		// random := 10 // Current Eth design.
 		random := 5
 		time.Sleep(time.Second * time.Duration(random))
 	}
